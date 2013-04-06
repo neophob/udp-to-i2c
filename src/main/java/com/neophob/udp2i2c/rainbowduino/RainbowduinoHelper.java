@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU General Public License
  * along with PixelController.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.neophob.udp2i2c.i2c;
+package com.neophob.udp2i2c.rainbowduino;
 
 
 /**
@@ -29,8 +29,6 @@ package com.neophob.udp2i2c.i2c;
  */
 public class RainbowduinoHelper {
 
-	private static final int BUFFERSIZE = 8*8;
-
 	/**
 	 * 
 	 */
@@ -40,43 +38,35 @@ public class RainbowduinoHelper {
 	
 
 	/**
-	 * convert rgb image data to rainbowduino compatible format
-	 * format 8x8x4
+	 * the rainbowduino can control 12bit per pixel - reduce the data rate here
+	 * output format is [32*r][32*g][32*b]
 	 * 
-	 * @param data the rgb image as int[64] 192 bytes
-	 * @return rainbowduino compatible format as byte[3*8*4] 
+	 * @param data
+	 * @return
 	 */
-	public static byte[] convertRgbToRainbowduino(byte[] data) throws IllegalArgumentException {
-		if (data==null) {
-			throw new IllegalArgumentException("data is null!");
+	public static byte[] convert24bitTo12bit(byte[] data) {
+		if (data.length != 192) {
+			System.out.println("warning, unexpected buffersize: "+data.length);
+			return new byte[0];
 		}
+		
+		int[] r = new int[64];
+		int[] g = new int[64];
+		int[] b = new int[64];
 
-		byte[] converted = new byte[3*8*8];
-		int[] r = new int[BUFFERSIZE];
-		int[] g = new int[BUFFERSIZE];
-		int[] b = new int[BUFFERSIZE];
-		int tmp;
+		int i=0;
+		int j=0;
+		while (i<192) {
+			r[j] = data[i++];
+			g[j] = data[i++];
+			b[j] = data[i++];
+			j++;
+		}
+		
+		byte[] converted = new byte[96];
 		int ofs=0;
-		int dst;
-
-		//step#1: split up r/g/b and apply gammatab
-		for (int n=0; n<BUFFERSIZE; n++) {
-			//one int contains the rgb color
-			tmp = data[ofs];
-
-			//the buffer on the rainbowduino takes GRB, not RGB				
-			g[ofs] = (int) ((tmp>>16) & 255);  //r
-			r[ofs] = (int) ((tmp>>8)  & 255);  //g
-			b[ofs] = (int) ( tmp      & 255);  //b		
-			ofs++;
-		}
-		//step#2: convert 8bit to 4bit
-		//Each color byte, aka two pixels side by side, gives you 4 bit brightness control, 
-		//first 4 bits for the left pixel and the last 4 for the right pixel. 
-		//-> this means a value from 0 (min) to 15 (max) is possible for each pixel 		
-		ofs=0;
-		dst=0;
-		for (int i=0; i<32;i++) {
+		int dst=0;		
+		for (i=0; i<32;i++) {
 			//240 = 11110000 - delete the lower 4 bits, then add the (shr-ed) 2nd color
 			converted[00+dst] = (byte)(((r[ofs]&240) + (r[ofs+1]>>4))& 255); //r
 			converted[32+dst] = (byte)(((g[ofs]&240) + (g[ofs+1]>>4))& 255); //g

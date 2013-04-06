@@ -17,6 +17,11 @@ public class UdpServer {
 	private final int port;
 	private final I2cConfig i2cConfig;
 
+	/**
+	 * 
+	 * @param port
+	 * @param i2cConfig
+	 */
     public UdpServer(int port, I2cConfig i2cConfig) {
         this.port = port;
         this.i2cConfig = i2cConfig;

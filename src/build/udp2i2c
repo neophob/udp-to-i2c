@@ -1,11 +1,26 @@
 #!/bin/bash
 #
 # Startup Script based on http://monocaffe.blogspot.ch/2011/04/java-daemon.html
+### BEGIN INIT INFO
+# Provides:          udp2i2c
+# Required-Start:    $remote_fs $syslog $time
+# Required-Stop:     $remote_fs $syslog $time
+# Should-Start:      
+# Should-Stop:       
+# Default-Start:     2 3 4 5
+# Default-Stop:
+# Short-Description: Regular background program processing daemon
+# Description:       cron is a standard UNIX program that runs user-specified 
+#                    programs at periodic scheduled times. vixie cron adds a 
+#                    number of features to the basic UNIX cron, including better
+#                    security and more powerful configuration options.
+### END INIT INFO
 
 JAVA_HOME="/usr/local/java/"
 runnable="com.neophob.udp2i2c.Runner"
 args="-p 65506 -b 1 -t 4"
-logfile="/home/pi/udp2i2c.log"
+application_dir="/home/pi/test/"
+logfile="${application_dir}udp2i2c.log"
 pid=""
 
 do_start () {
@@ -19,7 +34,9 @@ do_start () {
         fi
     fi
 
-    local path="lib/*"
+    /usr/bin/logger start udp2i2c daemon
+
+    local path="${application_dir}lib/*"
     local opts=""
 
     # Launch the process
@@ -49,7 +66,6 @@ getPID () {
     # not the best, but works on most linux
     pid=$( ps -ef | grep  ${runnable} | grep -v grep | awk '{ print $2 }' )
 }
-
 case ${1} in
     start)
         do_start

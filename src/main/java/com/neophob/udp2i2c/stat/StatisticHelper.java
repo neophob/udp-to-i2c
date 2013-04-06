@@ -2,6 +2,13 @@ package com.neophob.udp2i2c.stat;
 
 import java.util.concurrent.atomic.AtomicLong;
 
+
+/**
+ * singleton to track statistic, thread safe
+ * 
+ * @author michu
+ *
+ */
 public enum StatisticHelper {
 
 	INSTANCE;

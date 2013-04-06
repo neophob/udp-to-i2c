@@ -4,6 +4,11 @@ import java.util.List;
 
 import com.pi4j.io.i2c.I2CBus;
 
+/**
+ * 
+ * @author michu
+ *
+ */
 public class I2cConfig {
 
 	private final I2CBus i2cBus;

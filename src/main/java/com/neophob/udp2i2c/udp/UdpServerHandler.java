@@ -14,10 +14,15 @@ public class UdpServerHandler extends SimpleChannelUpstreamHandler {
 
 	private final I2cConfig i2cConfig;
 
+	/**
+	 * 
+	 * @param i2cConfig
+	 */
 	public UdpServerHandler(I2cConfig i2cConfig) {
 		this.i2cConfig = i2cConfig;
 	}
 
+	
 	/**
 	 * callback if one packet arrives. it contains data for one panel
 	 */
@@ -64,6 +69,7 @@ public class UdpServerHandler extends SimpleChannelUpstreamHandler {
 
 	}
 
+	
 	@Override
 	public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e) throws Exception {
 		StatisticHelper.INSTANCE.incrementAndGetError();
