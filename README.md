@@ -26,4 +26,20 @@ Listen on port 65506, use i2c bus 1 (common for rpi rev002) and send data to i2c
 
 ## Install Daemon
 
-	sudo update-rc.d udp2i2c defaults
+	pi@raspberrypi ~/test $ sudo update-rc.d udp2i2c defaults
+	update-rc.d: using dependency based boot sequencing
+	insserv: warning: script 'K01udp2i2c' missing LSB tags and overrides
+	insserv: warning: script 'udp2i2c' missing LSB tags and overrides
+
+	
+Check in which runlevels the daemon is started:
+
+	pi@raspberrypi ~/test $ find /etc/rc?.d | grep udp2i2c
+	/etc/rc0.d/K01udp2i2c
+	/etc/rc1.d/K01udp2i2c
+	/etc/rc2.d/S02udp2i2c
+	/etc/rc3.d/S02udp2i2c
+	/etc/rc4.d/S02udp2i2c
+	/etc/rc5.d/S02udp2i2c
+	/etc/rc6.d/K01udp2i2c
+	
