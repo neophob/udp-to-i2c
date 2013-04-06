@@ -55,6 +55,6 @@ Open the init script `/etc/init.d/udp2i2c` and make sure the following entries a
 
 	JAVA_HOME="/usr/local/java/"
 	args="-p 65506 -b 1 -t 4"
-	application_dir="/home/pi/test/"
+	application_dir="/home/pi/udp2i2c/"
 	
 	
