@@ -57,4 +57,15 @@ Open the init script `/etc/init.d/udp2i2c` and make sure the following entries a
 	args="-p 65506 -b 1 -t 4"
 	application_dir="/home/pi/udp2i2c/"
 	
-	
+## Performance
+
+Test with one I2C output and 130 frames/s running on a RPI rev002. 
+UDP2I2C use less than 8% CPU and about 4% of memory. 
+
+Java Version:
+
+	java version "1.8.0-ea"
+	Java(TM) SE Runtime Environment (build 1.8.0-ea-b36e)
+	Java HotSpot(TM) Client VM (build 25.0-b04, mixed mode)
+
+ 	
