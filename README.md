@@ -25,6 +25,7 @@ Listen on port 65506, use i2c bus 1 (common for rpi rev002) and send data to i2c
 
 
 ## Install Daemon
+Copy the `init.d/udp2i2c` file to `/etc/init.d/` (as root), then:
 
 	pi@raspberrypi ~/test $ sudo update-rc.d udp2i2c defaults
 	update-rc.d: using dependency based boot sequencing
