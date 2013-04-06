@@ -8,6 +8,7 @@ import org.jboss.netty.channel.SimpleChannelUpstreamHandler;
 
 import com.neophob.udp2i2c.i2c.I2cHelper;
 import com.neophob.udp2i2c.model.I2cConfig;
+import com.neophob.udp2i2c.stat.StatisticHelper;
 
 public class UdpServerHandler extends SimpleChannelUpstreamHandler {
 
@@ -33,7 +34,7 @@ public class UdpServerHandler extends SimpleChannelUpstreamHandler {
 			return;
 		}
 
-		short frameSize = msg.getShort(2);
+//		short frameSize = msg.getShort(2);
 		byte nr = msg.getByte(4);
 
 		//subtract 6 bytes, 5 bytes header and 1 byte footer
@@ -45,14 +46,19 @@ public class UdpServerHandler extends SimpleChannelUpstreamHandler {
 			System.out.println("failed to get i2c for offset "+nr);
 			return;
 		}
-		System.out.println("framesize: "+frameSize+", i2c address: "+i2cAddress+", data per panel: "+length);
+//		System.out.println("framesize: "+frameSize+", i2c address: "+i2cAddress+", data per panel: "+length);
 
 		byte[] buffer = new byte[length];
 		System.arraycopy(msg.array(), 5, buffer, 0, length);
 		try {
-			I2cHelper.sendData(i2cConfig.getI2cBus(), i2cAddress, buffer);							
+			I2cHelper.sendData(i2cConfig.getI2cBus(), i2cAddress, buffer);
+			long cnt = StatisticHelper.INSTANCE.incrementAndGetPacketsRecieved();
+			if (cnt%100==99) {
+				System.out.println("Packets recieved: "+cnt+", errors: "+StatisticHelper.INSTANCE.getErrorCount());
+			}
 		} catch (Exception ex) {
-			System.out.println("failed to send data to i2c address "+i2cAddress);
+			StatisticHelper.INSTANCE.incrementAndGetError();
+			System.err.println("failed to send data to i2c address "+i2cAddress);
 			ex.printStackTrace();
 		}
 
@@ -60,7 +66,8 @@ public class UdpServerHandler extends SimpleChannelUpstreamHandler {
 
 	@Override
 	public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e) throws Exception {
-		System.out.println("Ooops, error detected!");
+		StatisticHelper.INSTANCE.incrementAndGetError();
+		System.err.println("Ooops, error detected!");
 		e.getCause().printStackTrace();
 		// We don't close the channel because we can keep serving requests.
 	}
