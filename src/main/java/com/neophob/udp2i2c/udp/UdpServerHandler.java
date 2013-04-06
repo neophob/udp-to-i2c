@@ -58,7 +58,7 @@ public class UdpServerHandler extends SimpleChannelUpstreamHandler {
 		try {
 			I2cHelper.sendData(i2cConfig.getI2cBus(), i2cAddress, buffer);
 			long cnt = StatisticHelper.INSTANCE.incrementAndGetPacketsRecieved();
-			if (cnt%100==99) {
+			if (cnt%1000==0) {
 				System.out.println("Packets recieved: "+cnt+", errors: "+StatisticHelper.INSTANCE.getErrorCount());
 			}
 		} catch (Exception ex) {

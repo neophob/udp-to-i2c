@@ -27,6 +27,8 @@ public abstract class I2cHelper {
 		byte[] rb12bit = RainbowduinoHelper.convert24bitTo12bit(buffer);
 		I2CDevice arduino = bus.getDevice(id);
 		arduino.write(rb12bit, 0, rb12bit.length);
+		
+		//sleep is needed to prevent strange i2c errors after a while.
 		Thread.sleep(5);
 	}
 	
