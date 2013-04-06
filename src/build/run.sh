@@ -1,1 +1,1 @@
-java -cp *:./pi4j-core-0.0.5.jar com.neophob.udp2i2c.Runner $@
+java -cp ./lib/*:./lib/pi4j-core-0.0.5.jar com.neophob.udp2i2c.Runner $@

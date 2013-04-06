@@ -29,6 +29,14 @@
  
     <baseDirectory>${project.artifactId}-${project.version}</baseDirectory>
  
+ 	<files>
+ 		<file>
+			<source>${basedir}/src/build/run.sh</source>
+			<outputDirectory>/</outputDirectory>
+			<filtered>false</filtered>
+			<fileMode>0755</fileMode>
+		</file>
+ 	</files>
 	<!-- collect external libs -->
 	<dependencySets>
 		<dependencySet>
