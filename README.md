@@ -15,7 +15,7 @@ http://neophob.com/2013/04/i2c-communication-between-a-rpi-and-a-arduino/
 
 ##Example
 
-Listen on port 65506, use i2c bus 1 (common for rpi rev002) and send data to i2c address nr.4:
+Listen on port 65506, use i2c bus 1 (common for rpi rev002) and send data to i2c address nr. 4:
 
 	pi@raspberrypi ~/test $ /home/pi/test/run.sh -p 65506 -b 1 -t 4 
 	UDP-to-I2c Server v0.1 by Michael Vogt / neophob.com
@@ -23,6 +23,13 @@ Listen on port 65506, use i2c bus 1 (common for rpi rev002) and send data to i2c
 	Listening on port 65506, using i2c bus 1, i2c target address:
 	    4 
 
+Listen on port 65506, use i2c bus 1 (common for rpi rev002) and send data to i2c address nr. 4, 5 and 6:
+
+	pi@raspberrypi ~/test $ /home/pi/test/run.sh -p 65506 -b 1 -t 4:5:6
+	UDP-to-I2c Server v0.1 by Michael Vogt / neophob.com
+	Bridge a TPM2Net UDP packet to I2C
+	Listening on port 65506, using i2c bus 1, i2c target address:
+	    4 5 6
 
 ## Install Daemon
 Copy the `init.d/udp2i2c` file to `/etc/init.d/` (as root), then:
