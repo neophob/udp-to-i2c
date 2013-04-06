@@ -38,7 +38,7 @@
 		</file>
  		<file>
 			<source>${basedir}/src/build/udp2i2c</source>
-			<outputDirectory>/</outputDirectory>
+			<outputDirectory>/init.d</outputDirectory>
 			<filtered>false</filtered>
 			<fileMode>0755</fileMode>
 		</file>
