@@ -1,9 +1,6 @@
 package com.neophob.udp2i2c;
 
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.net.InetAddress;
-import java.util.Arrays;
+import com.neophob.udp2i2c.i2c.I2cHelper;
 
 import junit.framework.Test;
 import junit.framework.TestCase;
@@ -32,11 +29,26 @@ public class AppTest extends TestCase {
         return new TestSuite( AppTest.class );
     }
 
-    /**
-     * Rigourous Test :-)
-     * @throws Exception 
-     */
-    public void testApp() throws Exception {
-		assertTrue(true);
+
+    
+    public void testConvert() throws Exception {
+    	assertEquals(0, I2cHelper.convert24bitTo12bit(new byte[2]).length);
+    	assertEquals(0, I2cHelper.convert24bitTo12bit(new byte[2000]).length);
+    	assertEquals(0, I2cHelper.convert24bitTo12bit(new byte[0]).length);
+    	
+    	byte[] bfr = new byte[192];
+    	for (int i=0; i<192; i++) {
+    		bfr[i] = (byte)i;
+    	}
+    	byte[] ret = I2cHelper.convert24bitTo12bit(bfr);
+    	
+    	int i=0;
+    	for (byte b: ret) {
+    		System.out.print((int)(b&255)+",");
+    		if (i++ % 8 ==7) {
+    			System.out.println();
+    		}
+    	}
+    	
     }
 }

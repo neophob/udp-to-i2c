@@ -12,19 +12,19 @@ public class ManualTest {
 	 */
 	public static void main(String[] args) throws Exception {
     	final String targetHost = "192.168.111.25";
-    	final int targetPort = 6803;
+    	final int targetPort = 65506;
     	
-    	byte[] imageData = new byte[64];
+    	byte[] imageData = new byte[192];
     	Arrays.fill(imageData, (byte)99);
-    	
-        byte[] outputBuffer = new byte[64 + 5 + 1];
+    	System.out.println("imageData size: "+imageData.length);
+        byte[] outputBuffer = new byte[imageData.length + 5 + 1];
         
         //write header of udp packet
 		outputBuffer[0] = (byte)0x9c;
 		outputBuffer[1] = (byte)0xda;
 		outputBuffer[2] = ((byte)(imageData.length >> 8 & 0xFF));
 		outputBuffer[3] = ((byte)(imageData.length & 0xFF));
-		outputBuffer[4] = ((byte)1);
+		outputBuffer[4] = ((byte)0);
 		System.arraycopy(imageData, 0, outputBuffer, 5, imageData.length);		
     	
     	InetAddress address = InetAddress.getByName(targetHost);
@@ -35,7 +35,7 @@ public class ManualTest {
 		packet.setLength(outputBuffer.length);
 		dsocket.send(packet);		
 		
-		System.out.println("done");
+		System.out.println("done "+targetHost);
 
 	}
 

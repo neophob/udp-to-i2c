@@ -75,7 +75,12 @@ public class Runner {
         	}
         }
         
-        System.out.println("Listening on port "+port+", using i2c bus "+bus);
+        System.out.println("Listening on port "+port+", using i2c bus "+bus+", i2c target address:");
+        System.out.print("\t");
+        for (int a: i2cAddress) {
+        	System.out.print(a+" ");
+        }
+        System.out.println();
         
         final I2CBus i2cBus = I2CFactory.getInstance(bus);
         
