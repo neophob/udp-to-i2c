@@ -1,4 +1,4 @@
-#udp-to-i2c
+#UDP-to-I2C
 
 UDP-to-I2c Java server using netty, running on a raspberry pi.
 

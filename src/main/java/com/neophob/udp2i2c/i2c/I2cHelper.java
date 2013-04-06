@@ -26,7 +26,7 @@ public abstract class I2cHelper {
 		byte[] rb12bit = convert24bitTo12bit(buffer);
 		I2CDevice arduino = bus.getDevice(id);
 		arduino.write(rb12bit, 0, rb12bit.length);
-		//Thread.sleep(5);
+		Thread.sleep(5);
 	}
 	
 	
