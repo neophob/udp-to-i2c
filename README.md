@@ -31,7 +31,7 @@ Listen on port 65506, use i2c bus 1 (common for rpi rev002) and send data to i2c
 	Listening on port 65506, using i2c bus 1, i2c target address:
 	    4 5 6
 
-## Install Daemon
+## Install Daemon (run on boot)
 Copy the `init.d/udp2i2c` file to `/etc/init.d/` (as root), then:
 
 	pi@raspberrypi ~/test $ sudo update-rc.d udp2i2c defaults
@@ -50,4 +50,11 @@ Check in which runlevels the daemon is started:
 	/etc/rc4.d/S02udp2i2c
 	/etc/rc5.d/S02udp2i2c
 	/etc/rc6.d/K01udp2i2c
+	
+Open the init script `/etc/init.d/udp2i2c` and make sure the following entries are correct:
+
+	JAVA_HOME="/usr/local/java/"
+	args="-p 65506 -b 1 -t 4"
+	application_dir="/home/pi/test/"
+	
 	

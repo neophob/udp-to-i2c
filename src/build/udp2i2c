@@ -17,10 +17,10 @@
 ### END INIT INFO
 
 JAVA_HOME="/usr/local/java/"
-runnable="com.neophob.udp2i2c.Runner"
 args="-p 65506 -b 1 -t 4"
 application_dir="/home/pi/test/"
 logfile="${application_dir}udp2i2c.log"
+runnable="com.neophob.udp2i2c.Runner"
 pid=""
 
 do_start () {
