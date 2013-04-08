@@ -33,8 +33,12 @@ including some changes regarding the interrupt handling to allow the
 controller to update the LEDs and receiving incoming serial data at the
 same time.
 
-
+Hints:
 https://github.com/sysrun/GroveLedBar/blob/master/GroveLedbar.cpp
+
+Open Issues: 
+-why do we need an interupt routine?
+
 */
 
 #include <Wire.h>
@@ -113,6 +117,7 @@ void setup() {
 
   // disable all internal interrupts
   cli();
+  
   // initialize LED update routine and MY9221 state
   DDR_LINES  |=  BIT_LINES;
   PORT_LINES &= ~BIT_LINES;
@@ -124,6 +129,7 @@ void setup() {
   DDRB |= 0x20;
   // clear the display to get a clean state
   clearDisplay();
+  
   // init TIMER 1 (trigger every ~1250us)
   TCCR1A = 0;
   TCCR1B = _BV(WGM13);
@@ -135,6 +141,7 @@ void setup() {
   sei();
   
   Wire.begin(I2C_ADDRESS);                // join i2c bus with address #4
+  //TODO really not needed here????
 //  Wire.onReceive(receiveEvent); // register event
   
 }
@@ -330,7 +337,7 @@ void switchOnDrive(unsigned char line) {
 
 void clearData() {
   PORT_DATA &= ~BIT_DATA;
-  for (unsigned char i = 0; i < 192; i++) {
+  for (byte i = 0; i < 192; i++) {
     PORT_CLK ^= BIT_CLK;
   }
 }
@@ -362,6 +369,8 @@ ISR(TIMER1_OVF_vect) {
   // interrupt and the interrupt of the LED update routine do otherwise
   // result in major data loss and data corruption if we wouldn't re-enable
   // the global interrupts here.
+  
+  //TODO really needed here????
   sei();
   // determine the frame buffer row to be used for this interrupt call
   byte row = 7 - currentLine;
@@ -388,7 +397,10 @@ ISR(TIMER1_OVF_vect) {
   // since the following code is timing-sensitive we have to disable
   // the global interrupts again to avoid ghosting / flickering of 
   // the other lines that shouldn't be active at all.
+
+  //TODO really needed here????  
   cli();
+
   latchData();
   // activate current line
   switchOnDrive(currentLine);
