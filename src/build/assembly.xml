@@ -49,6 +49,16 @@
 			<fileMode>0755</fileMode>
 		</file>
  	</files>
+
+	<fileSets>
+		<!-- Copy all files, including binary (without conversion) -->
+		<fileSet>
+			<directory>${basedir}/src/build/Arduino</directory>
+			<outputDirectory>/Arduino</outputDirectory>
+			<filtered>false</filtered>
+		</fileSet>
+	</fileSets>
+
 	<!-- collect external libs -->
 	<dependencySets>
 		<dependencySet>

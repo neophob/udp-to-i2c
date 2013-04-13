@@ -10,7 +10,7 @@ Recieve udp data from the PixelController software and send out on the i2c bus w
 This application use the TPM2.net UDP protocol, see http://www.ledstyles.de/ftopic18969.html for more details.
 
 ##Setup RPI
-http://neophob.com/2013/04/i2c-communication-between-a-rpi-and-a-arduino/
+[http://neophob.com/2013/04/i2c-communication-between-a-rpi-and-a-arduino/](http://)
 
 
 ##Example
@@ -68,4 +68,5 @@ Java Version:
 	Java(TM) SE Runtime Environment (build 1.8.0-ea-b36e)
 	Java HotSpot(TM) Client VM (build 25.0-b04, mixed mode)
 
- 	
+## Arduino I2C clients
+Check the `Arduino` directory, some i2c client implementations can be found there.
