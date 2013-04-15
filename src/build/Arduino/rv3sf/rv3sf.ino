@@ -140,6 +140,16 @@ void setup() {
   // re-enable all internal interrupts
   sei();
   
+  //i like yellow...
+  for (byte b=0; b<8; b++) {  
+    for (byte row=0; row<8; row++) {
+      frameBuffers[0][RED][row][b] = 255;
+      frameBuffers[1][RED][row][b] = 255;    
+      frameBuffers[0][GREEN][row][b] = 255;
+      frameBuffers[1][GREEN][row][b] = 255;    
+    }
+  }
+  
   Wire.begin(I2C_ADDRESS);                // join i2c bus with address #4
   //TODO really not needed here????
 //  Wire.onReceive(receiveEvent); // register event
