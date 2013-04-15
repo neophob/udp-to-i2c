@@ -64,56 +64,21 @@ const unsigned char NUMBER_OF_COLORS = 3;
 const unsigned char RED = 0;
 const unsigned char GREEN = 1;
 const unsigned char BLUE = 2;
-//const unsigned char NUMBER_OF_FRAME_FRAGMENTS = 4;
-//const int FRAME_FRAGMENT_LENGTH = ((RAINBOWDUINO_LEDS / NUMBER_OF_FRAME_FRAGMENTS) * NUMBER_OF_COLORS); //48
-
-// serial protocol related const variables
-//const long BAUD_RATE = 115200;
-//const unsigned char HEADER_LENGTH = 3;
-//const unsigned char ACK_REPLY_LENGTH = 4;
-//const byte HEADER = 0x10;
-//const byte FRAME_FRAGMENTS[NUMBER_OF_FRAME_FRAGMENTS] = {0x20, 0x21, 0x22, 0x23};
-// serial protocol state codes
-//const byte STATE_ACK = 0x30;
-//const byte STATE_FRAME_FRAGMENT_INDEX = 0x31;
-//const byte STATE_INCOMPLETE_FRAME = 0x32;
-
-// byte array used to send back ack replies
-// (HEAHDER, 2 bytes for returned value, ERROR CODE)
-//byte ackReply[ACK_REPLY_LENGTH] = {HEADER, 0, 0, 0};
 
 // byte array used as frame buffers for the currently received and displayed frame
 // (2 buffers, RGB colors, 8 rows, 8 columns)
 unsigned char frameBuffers[2][NUMBER_OF_COLORS][8][8];
 // the currently used frame buffer by the LED update routine
 volatile byte currentFrameBuffer;
+volatile byte switchFramebuffer;
 // the current line the LED update routine will push color data for
 volatile byte currentLine;
-
-// global variables used to parse the incoming serial data
-//byte serialData;             // stores the currently parsed byte
-//unsigned char headerCounter; // counts the number of found HEADER bytes
-//int frameFragmentPos;        // the relative position in the currently parsed frame fragment
-//int frameFragmentPosOffset;  // the offset to the relative position of the currently parsed frame fragment
-//int frameFragmentIndex;      // the index of the currently parsed frame fragment
-//int crc;                     // used to calculate the frame fragment crc value
-//unsigned char currentColor;  // used to store the current color index
-//unsigned char currentRow;    // used to store the current row index
-//unsigned char currentColumn; // used to store the current column index
 
 void setup() {
   // initialize global variables used to update the LEDs
   currentFrameBuffer = 0;
   currentLine = 0;
-  // initialize global variables used to parse the incoming serial data
-/*  headerCounter = 0;
-  frameFragmentPos = -1;
-  frameFragmentPosOffset = -1;
-  frameFragmentIndex = -1;
-  crc = 0;
-  currentColor = 0;
-  currentRow = 0;
-  currentColumn = 0;*/
+  switchFramebuffer = 0;
 
   // disable all internal interrupts
   cli();
@@ -140,7 +105,7 @@ void setup() {
   // re-enable all internal interrupts
   sei();
   
-  //i like yellow...
+  //initial image: i like yellow...
   for (byte b=0; b<8; b++) {  
     for (byte row=0; row<8; row++) {
       frameBuffers[0][RED][row][b] = 255;
@@ -173,12 +138,14 @@ void checkForNewFrames() {
     byte col=0;
     byte col0,col1;
     
+    byte fbNotInUse = !currentFrameBuffer;
+    
     for (b=0; b<32; b++) {
       col1 = Wire.read();
       col0 = col1 >> 4;
       col1 &= 0x0f;
-      frameBuffers[currentFrameBuffer][RED][row][col++] = col0;
-      frameBuffers[currentFrameBuffer][RED][row][col++] = col1;
+      frameBuffers[fbNotInUse][RED][row][col++] = col0;
+      frameBuffers[fbNotInUse][RED][row][col++] = col1;
       if (col==8) {
         col=0;
         row++;
@@ -188,8 +155,8 @@ void checkForNewFrames() {
       col1 = Wire.read();
       col0 = col1 >> 4;
       col1 &= 0x0f;
-      frameBuffers[currentFrameBuffer][GREEN][row][col++] = col0;
-      frameBuffers[currentFrameBuffer][GREEN][row][col++] = col1;
+      frameBuffers[fbNotInUse][GREEN][row][col++] = col0;
+      frameBuffers[fbNotInUse][GREEN][row][col++] = col1;
       if (col==8) {
         col=0;
         row++;
@@ -199,124 +166,25 @@ void checkForNewFrames() {
       col1 = Wire.read();
       col0 = col1 >> 4;
       col1 &= 0x0f;
-      frameBuffers[currentFrameBuffer][BLUE][row][col++] = col0;
-      frameBuffers[currentFrameBuffer][BLUE][row][col++] = col1;
+      frameBuffers[fbNotInUse][BLUE][row][col++] = col0;
+      frameBuffers[fbNotInUse][BLUE][row][col++] = col1;
       if (col==8) {
         col=0;
         row++;
       }
     }
-
+    
+    switchFramebuffer = 1;
+    
   }
-
 }
 
 void loop() {
 
   checkForNewFrames();
   
-  // check for available serial data and start parsing after the HEADER bytes have been found
-/*  while (Serial.available() > 0) {
-    serialData = Serial.read();
-    // count the number of header bytes if we're not parsing a frame fragment right now
-    if (frameFragmentPos == -1) {
-      if (serialData == HEADER) {
-        headerCounter++;
-        // check if we've counted two HEADER bytes
-        if (headerCounter == 2) {
-          // set the frame fragment position and start the parsing
-          frameFragmentPos = 0;
-          headerCounter = 0;
-        }
-      } else {
-        headerCounter = 0;
-      }
-      continue;
-    }
-
-    // check if we need to resolve the frame fragment index
-    if (frameFragmentPos == 0 && frameFragmentIndex == -1) {
-      for (unsigned char i = 0; i < NUMBER_OF_FRAME_FRAGMENTS; i++) {
-        if (serialData == FRAME_FRAGMENTS[i]) {
-          frameFragmentIndex = i;
-          frameFragmentPosOffset = frameFragmentIndex * FRAME_FRAGMENT_LENGTH;
-          break;
-        }
-      }
-      // throw an error in case we couldn't parse the frame fragment index
-      if (frameFragmentIndex == -1) {
-        sendAckReply(STATE_FRAME_FRAGMENT_INDEX, serialData);
-      }
-      // throw an error in case the frame fragment index doesn't match the 
-      // currentRow counter which indicates that we haven't received the 
-      // frame fragments in the correct order. that can happen if you reset
-      // the controller manually or if a frame fragment was lost during
-      // transfer. therefore we'll skip the just received frame index incl.
-      //  it's frame data.
-      if (frameFragmentIndex * 2 != currentRow) {
-        sendAckReply(STATE_INCOMPLETE_FRAME, frameFragmentIndex);
-      }
-      continue;        
-    }
-
-    // store the received byte in the frame buffer and calculate the crc value
-    if (frameFragmentPos != -1 && frameFragmentPos < FRAME_FRAGMENT_LENGTH) {
-      // store received color value in the currently used framebuffer
-      int framePos = frameFragmentPosOffset + frameFragmentPos;
-      int frameBufferPos = framePos / NUMBER_OF_COLORS;
-      frameBuffers[currentFrameBuffer][currentColor][currentRow][currentColumn] = serialData;
-      // reset currentColor pointer if a complete color cycle is done
-      currentColor++;
-      if (currentColor == NUMBER_OF_COLORS) {
-        currentColor = 0;
-        currentColumn++;
-        // reset currentColumn pointer if a complete row is done
-        if (currentColumn == 8) {
-          currentColumn = 0;
-          currentRow++;
-          // reset currentRow pointer if a complete row cycle is done
-          if (currentRow == 8) {
-            currentRow = 0;
-          }
-        }
-      }
-      // calculate crc value for the currently parsed frame fragment
-      crc = crc + serialData;
-      // increment the frame fragment position
-      frameFragmentPos++;
-    }
-    
-    // check if we've parsed all bytes of the current frame fragment
-    if (frameFragmentPos == FRAME_FRAGMENT_LENGTH) {
-      // switch the currently used frame buffer if we've received the last frame fragment
-      if (frameFragmentIndex == NUMBER_OF_FRAME_FRAGMENTS) {
-        currentFrameBuffer = !currentFrameBuffer;
-        // reset global variables that have been in use to parse the whole frame
-        currentRow = 0;
-        currentColumn = 0;
-      }
-      // let the java code know that we've parse an entire frame fragment
-      sendAckReply(STATE_ACK, crc);
-    }
-  }*/
 }
 
-// send the ack reply message to the serial interface and reset the global parsing variables
-/*void sendAckReply(byte stateCode, int value) {
-  // update ack reply array
-  ackReply[1] = value >> 8;
-  ackReply[2] = value;
-  ackReply[3] = stateCode;
-  // send ack reply message
-  Serial.write(ackReply, ACK_REPLY_LENGTH);
-  Serial.flush();
-  // reset global variables that have been in use to parse the frame fragment
-  frameFragmentPos = -1;
-  frameFragmentPosOffset = -1;
-  frameFragmentIndex = -1;
-  currentColor = 0;
-  crc = 0;
-}*/
 
 void send16BitData(unsigned int data) {
   for (byte i = 0; i < 16; i++) {
@@ -419,6 +287,12 @@ ISR(TIMER1_OVF_vect) {
   currentLine++;
   if (currentLine == 8) {
     currentLine = 0;
+    
+    if (switchFramebuffer==1) {
+      switchFramebuffer = 0;
+      currentFrameBuffer = !currentFrameBuffer;
+    }
+
   }
 }
 
