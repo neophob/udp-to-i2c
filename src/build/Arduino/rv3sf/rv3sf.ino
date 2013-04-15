@@ -109,15 +109,15 @@ void setup() {
   for (byte b=0; b<8; b++) {  
     for (byte row=0; row<8; row++) {
       frameBuffers[0][RED][row][b] = 255;
-      frameBuffers[1][RED][row][b] = 255;    
-      frameBuffers[0][GREEN][row][b] = 255;
-      frameBuffers[1][GREEN][row][b] = 255;    
+      frameBuffers[1][BLUE][row][b] = 255;    
+      //frameBuffers[0][GREEN][row][b] = 255;
+      //frameBuffers[1][GREEN][row][b] = 255;    
     }
   }
   
   Wire.begin(I2C_ADDRESS);                // join i2c bus with address #4
   //TODO really not needed here????
-//  Wire.onReceive(receiveEvent); // register event
+  Wire.onReceive(receiveEvent); // register event
   
 }
 
@@ -125,8 +125,8 @@ void setup() {
 //get data from master - HINT: this is a ISR call!
 //HINT2: do not handle stuff here!! this will NOT work
 //collect only data here and process it in the main loop!
-//void receiveEvent(int howMany) {
-//}
+void receiveEvent(int howMany) {
+}
 
 void checkForNewFrames() {
   byte b=0;
@@ -134,41 +134,46 @@ void checkForNewFrames() {
   if (dataSize>=DATA_LEN_4_BIT) {
     //read image data (payload) - an image size is exactly 96 bytes
     //frameBuffers[currentFrameBuffer][currentColor][currentRow][currentColumn] = serialData;
-    byte row=0;
-    byte col=0;
     byte col0,col1;
-    
     byte fbNotInUse = !currentFrameBuffer;
     
+    byte row=0;
+    byte col=0;
     for (b=0; b<32; b++) {
       col1 = Wire.read();
       col0 = col1 >> 4;
       col1 &= 0x0f;
       frameBuffers[fbNotInUse][RED][row][col++] = col0;
       frameBuffers[fbNotInUse][RED][row][col++] = col1;
-      if (col==8) {
+      if (col==7) {
         col=0;
         row++;
       }
     }    
+    
+    col=0;
+    row=0;
     for (b=0; b<32; b++) {
       col1 = Wire.read();
       col0 = col1 >> 4;
       col1 &= 0x0f;
       frameBuffers[fbNotInUse][GREEN][row][col++] = col0;
       frameBuffers[fbNotInUse][GREEN][row][col++] = col1;
-      if (col==8) {
+      if (col==7) {
         col=0;
         row++;
       }
     }
+    
+    col=0;
+    row=0;
     for (b=0; b<32; b++) {
       col1 = Wire.read();
       col0 = col1 >> 4;
       col1 &= 0x0f;
       frameBuffers[fbNotInUse][BLUE][row][col++] = col0;
       frameBuffers[fbNotInUse][BLUE][row][col++] = col1;
-      if (col==8) {
+      if (col==7) {
         col=0;
         row++;
       }
@@ -179,10 +184,19 @@ void checkForNewFrames() {
   }
 }
 
+int cnt=0;
 void loop() {
 
   checkForNewFrames();
-  
+
+/*  
+  cnt++;
+  if (cnt > 10000) {
+  //used to debug framw switching
+    switchFramebuffer= 1;
+    cnt=0;
+  }
+*/
 }
 
 
