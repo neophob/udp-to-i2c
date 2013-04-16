@@ -102,6 +102,7 @@ void setup() {
   TIMSK1 = _BV(TOIE1);
   TCNT1 = 0;
   TCCR1B |= _BV(CS10);
+  
   // re-enable all internal interrupts
   sei();
   
@@ -117,8 +118,7 @@ void setup() {
   
   Wire.begin(I2C_ADDRESS);                // join i2c bus with address #4
   //TODO really not needed here????
-  Wire.onReceive(receiveEvent); // register event
-  
+  Wire.onReceive(receiveEvent); // register event  
 }
 
 
@@ -126,16 +126,19 @@ void setup() {
 //HINT2: do not handle stuff here!! this will NOT work
 //collect only data here and process it in the main loop!
 void receiveEvent(int howMany) {
+  if (howMany >= DATA_LEN_4_BIT) {
+    checkForNewFrames();
+  }
 }
 
 void checkForNewFrames() {
   byte b=0;
-  byte dataSize = Wire.available();
-  if (dataSize>=DATA_LEN_4_BIT) {
+//  byte dataSize = Wire.available();
+//  if (dataSize>=DATA_LEN_4_BIT) {
     //read image data (payload) - an image size is exactly 96 bytes
     //frameBuffers[currentFrameBuffer][currentColor][currentRow][currentColumn] = serialData;
     byte col0,col1;
-    byte fbNotInUse = !currentFrameBuffer;
+    byte fbNotInUse = currentFrameBuffer;
     
     byte row=0;
     byte col=0;
@@ -181,13 +184,13 @@ void checkForNewFrames() {
     
     switchFramebuffer = 1;
     
-  }
+//  }
 }
 
 int cnt=0;
 void loop() {
-
-  checkForNewFrames();
+  delay(10);
+  //checkForNewFrames();
 
 /*  
   cnt++;
@@ -216,9 +219,18 @@ void latchData() {
   PORT_DATA &= ~BIT_DATA;
   delayMicroseconds(10);
   PORT_LINES &= ~0x80;
-  for (unsigned char i = 0; i < 8; i++) {
+/*  for (unsigned char i = 0; i < 8; i++) {
     PORT_DATA ^= BIT_DATA;
-  }
+  }*/
+  PORT_DATA ^= BIT_DATA;
+  PORT_DATA ^= BIT_DATA;
+  PORT_DATA ^= BIT_DATA;
+  PORT_DATA ^= BIT_DATA;
+  
+  PORT_DATA ^= BIT_DATA;
+  PORT_DATA ^= BIT_DATA;
+  PORT_DATA ^= BIT_DATA;
+  PORT_DATA ^= BIT_DATA;
 }
 
 void switchOnDrive(unsigned char line) {
@@ -262,12 +274,14 @@ ISR(TIMER1_OVF_vect) {
   // result in major data loss and data corruption if we wouldn't re-enable
   // the global interrupts here.
   
-  //TODO really needed here????
+  //TODO really needed here???? enable interrupt
   sei();
+  
   // determine the frame buffer row to be used for this interrupt call
   byte row = 7 - currentLine;
   // clear the data of the former interrupt call to avoid flickering
   clearDisplay();
+  
   // push data to the MY9221 ICs
   send16BitData(0);
   // push the blue color value of the current row
@@ -291,7 +305,7 @@ ISR(TIMER1_OVF_vect) {
   // the other lines that shouldn't be active at all.
 
   //TODO really needed here????  
-  cli();
+  cli(); //disable interrupt
 
   latchData();
   // activate current line
@@ -302,11 +316,11 @@ ISR(TIMER1_OVF_vect) {
   if (currentLine == 8) {
     currentLine = 0;
     
-    if (switchFramebuffer==1) {
+/*    if (switchFramebuffer==1) {
       switchFramebuffer = 0;
       currentFrameBuffer = !currentFrameBuffer;
-    }
-
+    }*/
   }
+  
 }
 

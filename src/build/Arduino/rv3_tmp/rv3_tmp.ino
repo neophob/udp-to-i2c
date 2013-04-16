@@ -58,6 +58,8 @@ Rainbowduino V3 firmware capable of streaming 24bit RGB frames with up
 #define DATA_LEN_4_BIT 96
 const unsigned char I2C_ADDRESS = 4;
 
+//#define DEBUG 1
+
 // general const variables
 const unsigned char RAINBOWDUINO_LEDS = 64;
 const unsigned char NUMBER_OF_COLORS = 3;
@@ -67,12 +69,13 @@ const unsigned char BLUE = 2;
 
 // byte array used as frame buffers for the currently received and displayed frame
 // (2 buffers, RGB colors, 8 rows, 8 columns)
-unsigned char frameBuffers[2][NUMBER_OF_COLORS][8][8];
+byte frameBuffers[2][NUMBER_OF_COLORS][8][8];
 // the currently used frame buffer by the LED update routine
 volatile byte currentFrameBuffer;
 volatile byte switchFramebuffer;
+
 // the current line the LED update routine will push color data for
-volatile byte currentLine;
+byte currentLine;
 
 void setup() {
   // initialize global variables used to update the LEDs
@@ -102,8 +105,6 @@ void setup() {
   TIMSK1 = _BV(TOIE1);
   TCNT1 = 0;
   TCCR1B |= _BV(CS10);*/
-  Timer1.attachInterrupt(isr2);
-  Timer1.initialize(2000);
   
   // re-enable all internal interrupts
   sei();
@@ -121,6 +122,20 @@ void setup() {
   Wire.begin(I2C_ADDRESS);                // join i2c bus with address #4
   //TODO really not needed here????
   Wire.onReceive(receiveEvent); // register event  
+  
+  Timer1.attachInterrupt(isr2);
+  //500: very bad!
+  //1200: visible glitches
+  //1500: flickering, works, scanline visible
+  //1750: flickering, works, two scanlines visible
+  //2000: flickering, but works
+  //10000; almost cool, very slow update
+  Timer1.initialize(1600);  
+
+#ifdef DEBUG
+  Serial.begin(115200);
+  Serial.println("hi");
+#endif
 }
 
 
@@ -128,12 +143,16 @@ void setup() {
 //HINT2: do not handle stuff here!! this will NOT work
 //collect only data here and process it in the main loop!
 void receiveEvent(int howMany) {
-  if (howMany >= DATA_LEN_4_BIT) {
-    checkForNewFrames();
-  }
+//  if (howMany >= DATA_LEN_4_BIT) {
+//    checkForNewFrames();
+//  }
 }
 
 void checkForNewFrames() {
+//  while (switchFramebuffer==1) {
+    //block until blit is done
+//  }
+  
   byte b=0;
   //  byte dataSize = Wire.available();
   //  if (dataSize>=DATA_LEN_4_BIT) {
@@ -191,8 +210,15 @@ void checkForNewFrames() {
 
 int cnt=0;
 void loop() {
-  delay(10);
-  //checkForNewFrames();
+  byte b = Wire.available();
+  if (b>=DATA_LEN_4_BIT) { 
+    checkForNewFrames();
+  }
+
+#ifdef DEBUG
+  if (b>0)
+    Serial.println(b, DEC);
+#endif
 
   /*  
    cnt++;
@@ -221,7 +247,7 @@ void send16BitData(unsigned int data) {
 void latchData() {
   PORT_DATA &= ~BIT_DATA;
   //6ms - not working, 8ms also buggy
-  delayMicroseconds(16);
+  delayMicroseconds(14);
   PORT_LINES &= ~0x80;
   /*  for (unsigned char i = 0; i < 8; i++) {
    PORT_DATA ^= BIT_DATA;
@@ -281,43 +307,6 @@ static void isr2() {
   //TODO really needed here???? enable interrupt
   sei();
   
-  // determine the frame buffer row to be used for this interrupt call
-  byte row = 7 - currentLine;
-  // clear the data of the former interrupt call to avoid flickering
-  //clearDisplay();
-  
-  // push data to the MY9221 ICs
-  send16BitData(0);
-  // push the blue color value of the current row
-  for (byte column = 0; column < 8; column++) {
-    send16BitData(frameBuffers[currentFrameBuffer][BLUE][row][column]);
-  }
-  // push the green color value of the current row
-  for (byte column = 0; column < 4; column++) {
-    send16BitData(frameBuffers[currentFrameBuffer][GREEN][row][column]);
-  }
-  send16BitData(0);
-  for (byte column = 4; column < 8; column++) {
-    send16BitData(frameBuffers[currentFrameBuffer][GREEN][row][column]);
-  }
-  // push the red color value of the current row
-  for (byte column = 0; column < 8; column++) {
-    send16BitData(frameBuffers[currentFrameBuffer][RED][row][column]);
-  }
-  // since the following code is timing-sensitive we have to disable
-  // the global interrupts again to avoid ghosting / flickering of 
-  // the other lines that shouldn't be active at all.
-
-  //TODO really needed here????  
-
-  latchData();
-  cli(); //disable interrupt
-
-  // activate current line
-  switchOnDrive(currentLine);
-  PORTD &= ~0x04;
-  // increment current led row counter for the next interrupt call
-  currentLine++;
   if (currentLine == 8) {
     currentLine = 0;
     
@@ -326,8 +315,72 @@ static void isr2() {
       currentFrameBuffer = !currentFrameBuffer;
     }
   }
-  
 
+  // determine the frame buffer row to be used for this interrupt call
+//  byte row = currentLine;//7 - currentLine;
+  // clear the data of the former interrupt call to avoid flickering
+ // clearDisplay();
+  
+  // push data to the MY9221 ICs
+  send16BitData(0);
+  // push the blue color value of the current row
+/*  for (byte column = 0; column < 8; column++) {
+    send16BitData(frameBuffers[currentFrameBuffer][BLUE][row][column]);
+  }*/
+    send16BitData(frameBuffers[currentFrameBuffer][BLUE][currentLine][0]);
+    send16BitData(frameBuffers[currentFrameBuffer][BLUE][currentLine][1]);
+    send16BitData(frameBuffers[currentFrameBuffer][BLUE][currentLine][2]);
+    send16BitData(frameBuffers[currentFrameBuffer][BLUE][currentLine][3]);
+    
+    send16BitData(frameBuffers[currentFrameBuffer][BLUE][currentLine][4]);
+    send16BitData(frameBuffers[currentFrameBuffer][BLUE][currentLine][5]);
+    send16BitData(frameBuffers[currentFrameBuffer][BLUE][currentLine][6]);
+    send16BitData(frameBuffers[currentFrameBuffer][BLUE][currentLine][7]);
+  
+  // push the green color value of the current row
+/*  for (byte column = 0; column < 4; column++) {
+    send16BitData(frameBuffers[currentFrameBuffer][GREEN][row][column]);
+  }*/
+    send16BitData(frameBuffers[currentFrameBuffer][GREEN][currentLine][0]);
+    send16BitData(frameBuffers[currentFrameBuffer][GREEN][currentLine][1]);
+    send16BitData(frameBuffers[currentFrameBuffer][GREEN][currentLine][2]);
+    send16BitData(frameBuffers[currentFrameBuffer][GREEN][currentLine][3]);
+  
+  
+  send16BitData(0);
+/*  for (byte column = 4; column < 8; column++) {
+    send16BitData(frameBuffers[currentFrameBuffer][GREEN][row][column]);
+  }*/
+    send16BitData(frameBuffers[currentFrameBuffer][GREEN][currentLine][4]);
+    send16BitData(frameBuffers[currentFrameBuffer][GREEN][currentLine][5]);
+    send16BitData(frameBuffers[currentFrameBuffer][GREEN][currentLine][6]);
+    send16BitData(frameBuffers[currentFrameBuffer][GREEN][currentLine][7]);
+  
+  // push the red color value of the current row
+/*  for (byte column = 0; column < 8; column++) {
+    send16BitData(frameBuffers[currentFrameBuffer][RED][row][column]);
+  }*/
+    send16BitData(frameBuffers[currentFrameBuffer][RED][currentLine][0]);  
+    send16BitData(frameBuffers[currentFrameBuffer][RED][currentLine][1]);    
+    send16BitData(frameBuffers[currentFrameBuffer][RED][currentLine][2]);  
+    send16BitData(frameBuffers[currentFrameBuffer][RED][currentLine][3]);    
+
+    send16BitData(frameBuffers[currentFrameBuffer][RED][currentLine][4]);  
+    send16BitData(frameBuffers[currentFrameBuffer][RED][currentLine][5]);    
+    send16BitData(frameBuffers[currentFrameBuffer][RED][currentLine][6]);  
+    send16BitData(frameBuffers[currentFrameBuffer][RED][currentLine][7]);    
+  // since the following code is timing-sensitive we have to disable
+  // the global interrupts again to avoid ghosting / flickering of 
+  // the other lines that shouldn't be active at all.
+
+  //TODO really needed here????  
+  cli(); //disable interrupt
+
+  latchData();
+
+  // activate current line
+  switchOnDrive(currentLine++);
+  PORTD &= ~0x04;
 }
 
 
