@@ -126,11 +126,14 @@ void setup() {
   Timer1.attachInterrupt(isr2);
   //500: very bad!
   //1200: visible glitches
+  //1400: one scanline visible
   //1500: flickering, works, scanline visible
   //1750: flickering, works, two scanlines visible
   //2000: flickering, but works
   //10000; almost cool, very slow update
-  Timer1.initialize(1600);  
+  
+  //1400, eine scanline, wandert langsam zu mir
+  Timer1.initialize(1408);  
 
 #ifdef DEBUG
   Serial.begin(115200);
@@ -149,9 +152,9 @@ void receiveEvent(int howMany) {
 }
 
 void checkForNewFrames() {
-//  while (switchFramebuffer==1) {
+  while (switchFramebuffer==1) {
     //block until blit is done
-//  }
+  }
   
   byte b=0;
   //  byte dataSize = Wire.available();
@@ -319,7 +322,7 @@ static void isr2() {
   // determine the frame buffer row to be used for this interrupt call
 //  byte row = currentLine;//7 - currentLine;
   // clear the data of the former interrupt call to avoid flickering
- // clearDisplay();
+  //clearDisplay();
   
   // push data to the MY9221 ICs
   send16BitData(0);
