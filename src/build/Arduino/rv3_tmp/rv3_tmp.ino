@@ -44,21 +44,40 @@ Rainbowduino V3 firmware capable of streaming 24bit RGB frames with up
 #include <Wire.h>
 
 // ports and bit values needed by the LED update routine
+
+//DDRB - The Port B Data Direction Register - read/write
 #define DDR_DATA   DDRB
 #define DDR_CLK    DDRB
+
+//DDRD - The Port D Data Direction Register - read/write
 #define DDR_LINES  DDRD
+
+//PORTB maps to Arduino digital pins 8 to 13 The two high bits (6 & 7) map to the crystal pins and are not usable
 #define PORT_DATA  PORTB
 #define PORT_CLK   PORTB
+
+//PORTD maps to Arduino digital pins 0 to 7
 #define PORT_LINES PORTD
+
+// 0000 0001
 #define BIT_DATA   0x01
+
+// 0000 0010
 #define BIT_CLK    0x02
+
+// 1111 0000
 #define BIT_LINES  0xF0
 
 //32 byte per color
 #define DATA_LEN_4_BIT 96
-const unsigned char I2C_ADDRESS = 4;
+#define I2C_ADDRESS 4
+
+#define WAIT_MS_FOR_NEXT_FRAME 35
+unsigned long time;
+
 
 //#define DEBUG 1
+//#define POLICE_ANIMATION 1
 
 // general const variables
 const unsigned char RAINBOWDUINO_LEDS = 64;
@@ -133,8 +152,9 @@ void setup() {
   //10000; almost cool, very slow update
   
   //1400, eine scanline, wandert langsam zu mir
-  Timer1.initialize(1408);  
+//  Timer1.initialize(1408);  
 
+  Timer1.initialize(1616);
 #ifdef DEBUG
   Serial.begin(115200);
   Serial.println("hi");
@@ -211,8 +231,18 @@ void checkForNewFrames() {
   //  }
 }
 
-int cnt=0;
+#ifdef POLICE_ANIMATION
+int cnt;
+#endif
+
 void loop() {
+  
+  //limit framerate
+  if (millis()-time < WAIT_MS_FOR_NEXT_FRAME) {
+    return;
+  }  
+  time = millis();
+  
   byte b = Wire.available();
   if (b>=DATA_LEN_4_BIT) { 
     checkForNewFrames();
@@ -223,14 +253,15 @@ void loop() {
     Serial.println(b, DEC);
 #endif
 
-  /*  
+#ifdef POLICE_ANIMATION   
    cnt++;
-   if (cnt > 10000) {
+   if (cnt > 4) {
    //used to debug framw switching
    switchFramebuffer= 1;
    cnt=0;
    }
-   */
+#endif
+   
 }
 
 
@@ -251,6 +282,12 @@ void latchData() {
   PORT_DATA &= ~BIT_DATA;
   //6ms - not working, 8ms also buggy
   delayMicroseconds(14);
+
+//At 16Mhz, it takes 1us to execute 16 nop instructions
+//asm("nop\n nop\n nop\n nop\n nop\n nop\n nop\n nop\n");
+//asm("nop\n nop\n nop\n nop\n nop\n nop\n nop\n nop\n");
+
+
   PORT_LINES &= ~0x80;
   /*  for (unsigned char i = 0; i < 8; i++) {
    PORT_DATA ^= BIT_DATA;
@@ -266,11 +303,11 @@ void latchData() {
   PORT_DATA ^= BIT_DATA;
 }
 
-void switchOnDrive(unsigned char line) {
+/*void switchOnDrive(unsigned char line) {
   PORT_LINES &= ~BIT_LINES;
   PORT_LINES |= (line << 4);
   PORT_LINES |= 0x80;
-}
+}*/
 
 void clearData() {
   PORT_DATA &= ~BIT_DATA;
@@ -321,7 +358,9 @@ static void isr2() {
 
   // determine the frame buffer row to be used for this interrupt call
 //  byte row = currentLine;//7 - currentLine;
+
   // clear the data of the former interrupt call to avoid flickering
+  //use alot of time!
   //clearDisplay();
   
   // push data to the MY9221 ICs
@@ -379,11 +418,40 @@ static void isr2() {
   //TODO really needed here????  
   cli(); //disable interrupt
 
-  latchData();
+// ------------------------------------------------------
+//  latchData();
+  PORT_DATA &= ~BIT_DATA;
+  //6ms - not working, 8ms also buggy
+  delayMicroseconds(13);
 
+//At 16Mhz, it takes 1us to execute 16 nop instructions
+//asm("nop\n nop\n nop\n nop\n nop\n nop\n nop\n nop\n");
+//asm("nop\n nop\n nop\n nop\n nop\n nop\n nop\n nop\n");
+
+  PORT_LINES &= ~0x80;
+  /*  for (unsigned char i = 0; i < 8; i++) {
+   PORT_DATA ^= BIT_DATA;
+   }*/
+  PORT_DATA ^= BIT_DATA;
+  PORT_DATA ^= BIT_DATA;
+  PORT_DATA ^= BIT_DATA;
+  PORT_DATA ^= BIT_DATA;
+
+  PORT_DATA ^= BIT_DATA;
+  PORT_DATA ^= BIT_DATA;
+  PORT_DATA ^= BIT_DATA;
+  PORT_DATA ^= BIT_DATA;
+
+// ------------------------------------------------------
   // activate current line
-  switchOnDrive(currentLine++);
+//  switchOnDrive(currentLine++);
+  PORT_LINES &= ~BIT_LINES;
+  PORT_LINES |= (currentLine << 4);
+  PORT_LINES |= 0x80;
+
   PORTD &= ~0x04;
+  
+  currentLine++;
 }
 
 
