@@ -408,13 +408,10 @@ static void isr2() {
   clearDisplay();
   
   // push data to the MY9221 ICs
-  //send16Blanks();
-  send16BitData(0);
+  send16Blanks();
+  //send16BitData(0);
   
   // push the blue color value of the current row
-/*  for (byte column = 0; column < 8; column++) {
-    send16BitData(frameBuffers[currentFrameBuffer][BLUE][row][column]);
-  }*/
     send16BitData(frameBuffers[currentFrameBuffer][BLUE][currentLine][0]);
     send16BitData(frameBuffers[currentFrameBuffer][BLUE][currentLine][1]);
     send16BitData(frameBuffers[currentFrameBuffer][BLUE][currentLine][2]);
@@ -426,30 +423,20 @@ static void isr2() {
     send16BitData(frameBuffers[currentFrameBuffer][BLUE][currentLine][7]);
   
   // push the green color value of the current row
-/*  for (byte column = 0; column < 4; column++) {
-    send16BitData(frameBuffers[currentFrameBuffer][GREEN][row][column]);
-  }*/
     send16BitData(frameBuffers[currentFrameBuffer][GREEN][currentLine][0]);
     send16BitData(frameBuffers[currentFrameBuffer][GREEN][currentLine][1]);
     send16BitData(frameBuffers[currentFrameBuffer][GREEN][currentLine][2]);
     send16BitData(frameBuffers[currentFrameBuffer][GREEN][currentLine][3]);
   
-  
-  //send16Blanks();
-  send16BitData(0);
+  send16Blanks();
+  //send16BitData(0);
 
-/*  for (byte column = 4; column < 8; column++) {
-    send16BitData(frameBuffers[currentFrameBuffer][GREEN][row][column]);
-  }*/
     send16BitData(frameBuffers[currentFrameBuffer][GREEN][currentLine][4]);
     send16BitData(frameBuffers[currentFrameBuffer][GREEN][currentLine][5]);
     send16BitData(frameBuffers[currentFrameBuffer][GREEN][currentLine][6]);
     send16BitData(frameBuffers[currentFrameBuffer][GREEN][currentLine][7]);
   
   // push the red color value of the current row
-/*  for (byte column = 0; column < 8; column++) {
-    send16BitData(frameBuffers[currentFrameBuffer][RED][row][column]);
-  }*/
     send16BitData(frameBuffers[currentFrameBuffer][RED][currentLine][0]);  
     send16BitData(frameBuffers[currentFrameBuffer][RED][currentLine][1]);    
     send16BitData(frameBuffers[currentFrameBuffer][RED][currentLine][2]);  
@@ -458,12 +445,11 @@ static void isr2() {
     send16BitData(frameBuffers[currentFrameBuffer][RED][currentLine][4]);  
     send16BitData(frameBuffers[currentFrameBuffer][RED][currentLine][5]);    
     send16BitData(frameBuffers[currentFrameBuffer][RED][currentLine][6]);  
-    send16BitData(frameBuffers[currentFrameBuffer][RED][currentLine][7]);    
+    send16BitData(frameBuffers[currentFrameBuffer][RED][currentLine][7]);
+    
   // since the following code is timing-sensitive we have to disable
   // the global interrupts again to avoid ghosting / flickering of 
   // the other lines that shouldn't be active at all.
-
-  //TODO really needed here????  
   cli(); //disable interrupt
 
  // latchData();
