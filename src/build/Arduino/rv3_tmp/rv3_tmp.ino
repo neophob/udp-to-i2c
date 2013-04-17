@@ -76,7 +76,7 @@ Rainbowduino V3 firmware capable of streaming 24bit RGB frames with up
 unsigned long time;
 
 
-//#define DEBUG 1
+#define DEBUG 1
 //#define POLICE_ANIMATION 1
 
 // general const variables
@@ -143,22 +143,16 @@ void setup() {
   Wire.onReceive(receiveEvent); // register event  
   
   Timer1.attachInterrupt(isr2);
-  //500: very bad!
-  //1200: visible glitches
-  //1400: one scanline visible
-  //1500: flickering, works, scanline visible
-  //1750: flickering, works, two scanlines visible
-  //2000: flickering, but works
-  //10000; almost cool, very slow update
+  //2400 flicker (top down)
+  //2500 flicker on one line
+  //2600 flicker (down up)
+  Timer1.initialize(2500);
   
-  //1400, eine scanline, wandert langsam zu mir
-//  Timer1.initialize(1408);  
-
-  Timer1.initialize(1616);
 #ifdef DEBUG
   Serial.begin(115200);
   Serial.println("hi");
 #endif
+
 }
 
 
@@ -235,6 +229,10 @@ void checkForNewFrames() {
 int cnt;
 #endif
 
+#ifdef DEBUG
+long msIrq = 2400;
+#endif
+
 void loop() {
   
   //limit framerate
@@ -249,8 +247,27 @@ void loop() {
   }
 
 #ifdef DEBUG
-  if (b>0)
-    Serial.println(b, DEC);
+if (Serial.available()) {
+  char in = Serial.read();
+  if (in=='-') {
+    msIrq-=10;
+  }
+  if (in=='+') {
+    msIrq+=10;
+  }
+  if (in=='b') {
+    msIrq-=1;
+  }
+  if (in=='a') {
+    msIrq+=1;
+  }
+  Timer1.stop();
+  
+  Serial.print(msIrq);
+  Serial.println(" speed");
+  Timer1.setPeriod(msIrq);
+  Timer1.resume();
+}
 #endif
 
 #ifdef POLICE_ANIMATION   
@@ -281,7 +298,7 @@ void send16BitData(unsigned int data) {
 void latchData() {
   PORT_DATA &= ~BIT_DATA;
   //6ms - not working, 8ms also buggy
-  delayMicroseconds(14);
+  delayMicroseconds(12);
 
 //At 16Mhz, it takes 1us to execute 16 nop instructions
 //asm("nop\n nop\n nop\n nop\n nop\n nop\n nop\n nop\n");
@@ -317,11 +334,31 @@ void clearData() {
 }
 
 void clearDisplay() {
-  send16BitData(0);
+/*  send16BitData(0);
   clearData();
   send16BitData(0);
   clearData();
   latchData();
+  */
+
+  PORT_DATA &= ~BIT_DATA;
+  for (int i = 0; i < 416; i++) {
+      PORT_CLK ^= BIT_CLK;
+  }
+
+  delayMicroseconds(12);
+  PORT_LINES &= ~0x80;
+
+  PORT_DATA ^= BIT_DATA;
+  PORT_DATA ^= BIT_DATA;
+  PORT_DATA ^= BIT_DATA;
+  PORT_DATA ^= BIT_DATA;
+
+  PORT_DATA ^= BIT_DATA;
+  PORT_DATA ^= BIT_DATA;
+  PORT_DATA ^= BIT_DATA;
+  PORT_DATA ^= BIT_DATA;
+
 }
 
 static void isr2() {
@@ -361,7 +398,13 @@ static void isr2() {
 
   // clear the data of the former interrupt call to avoid flickering
   //use alot of time!
-  //clearDisplay();
+//  clearDisplay();
+/*
+   PORT_DATA &= ~BIT_DATA;
+  for (byte i = 0; i < 400; i++) {
+      PORT_CLK ^= BIT_CLK;
+  }
+*/
   
   // push data to the MY9221 ICs
   send16BitData(0);
@@ -422,7 +465,7 @@ static void isr2() {
 //  latchData();
   PORT_DATA &= ~BIT_DATA;
   //6ms - not working, 8ms also buggy
-  delayMicroseconds(13);
+  delayMicroseconds(12);
 
 //At 16Mhz, it takes 1us to execute 16 nop instructions
 //asm("nop\n nop\n nop\n nop\n nop\n nop\n nop\n nop\n");
