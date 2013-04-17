@@ -76,7 +76,7 @@ Rainbowduino V3 firmware capable of streaming 24bit RGB frames with up
 unsigned long time;
 
 
-#define DEBUG 1
+//#define DEBUG 1
 //#define POLICE_ANIMATION 1
 
 // general const variables
@@ -295,6 +295,15 @@ void send16BitData(unsigned int data) {
   }
 }
 
+
+void send16Blanks() {
+  PORT_DATA &= ~BIT_DATA;
+  for (byte i = 0; i < 16; i++) {
+      PORT_CLK ^= BIT_CLK;
+  } 
+}
+
+
 void latchData() {
   PORT_DATA &= ~BIT_DATA;
   //6ms - not working, 8ms also buggy
@@ -333,6 +342,7 @@ void clearData() {
   }
 }
 
+
 void clearDisplay() {
 /*  send16BitData(0);
   clearData();
@@ -346,6 +356,7 @@ void clearDisplay() {
       PORT_CLK ^= BIT_CLK;
   }
 
+  //latch data
   delayMicroseconds(12);
   PORT_LINES &= ~0x80;
 
@@ -358,7 +369,6 @@ void clearDisplay() {
   PORT_DATA ^= BIT_DATA;
   PORT_DATA ^= BIT_DATA;
   PORT_DATA ^= BIT_DATA;
-
 }
 
 static void isr2() {
@@ -393,21 +403,14 @@ static void isr2() {
     }
   }
 
-  // determine the frame buffer row to be used for this interrupt call
-//  byte row = currentLine;//7 - currentLine;
-
   // clear the data of the former interrupt call to avoid flickering
   //use alot of time!
-//  clearDisplay();
-/*
-   PORT_DATA &= ~BIT_DATA;
-  for (byte i = 0; i < 400; i++) {
-      PORT_CLK ^= BIT_CLK;
-  }
-*/
+  clearDisplay();
   
   // push data to the MY9221 ICs
+  //send16Blanks();
   send16BitData(0);
+  
   // push the blue color value of the current row
 /*  for (byte column = 0; column < 8; column++) {
     send16BitData(frameBuffers[currentFrameBuffer][BLUE][row][column]);
@@ -432,7 +435,9 @@ static void isr2() {
     send16BitData(frameBuffers[currentFrameBuffer][GREEN][currentLine][3]);
   
   
+  //send16Blanks();
   send16BitData(0);
+
 /*  for (byte column = 4; column < 8; column++) {
     send16BitData(frameBuffers[currentFrameBuffer][GREEN][row][column]);
   }*/
@@ -461,8 +466,7 @@ static void isr2() {
   //TODO really needed here????  
   cli(); //disable interrupt
 
-// ------------------------------------------------------
-//  latchData();
+ // latchData();
   PORT_DATA &= ~BIT_DATA;
   //6ms - not working, 8ms also buggy
   delayMicroseconds(12);
@@ -470,6 +474,7 @@ static void isr2() {
 //At 16Mhz, it takes 1us to execute 16 nop instructions
 //asm("nop\n nop\n nop\n nop\n nop\n nop\n nop\n nop\n");
 //asm("nop\n nop\n nop\n nop\n nop\n nop\n nop\n nop\n");
+
 
   PORT_LINES &= ~0x80;
   /*  for (unsigned char i = 0; i < 8; i++) {
