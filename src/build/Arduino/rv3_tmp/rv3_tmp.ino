@@ -118,13 +118,13 @@ void setup() {
   clearDisplay();
 
   // init TIMER 1 (trigger every ~1250us)
-/*  TCCR1A = 0;
-  TCCR1B = _BV(WGM13);
-  ICR1 = 10000;
-  TIMSK1 = _BV(TOIE1);
-  TCNT1 = 0;
-  TCCR1B |= _BV(CS10);*/
-  
+  /*  TCCR1A = 0;
+   TCCR1B = _BV(WGM13);
+   ICR1 = 10000;
+   TIMSK1 = _BV(TOIE1);
+   TCNT1 = 0;
+   TCCR1B |= _BV(CS10);*/
+
   // re-enable all internal interrupts
   sei();
 
@@ -141,13 +141,13 @@ void setup() {
   Wire.begin(I2C_ADDRESS);                // join i2c bus with address #4
   //TODO really not needed here????
   Wire.onReceive(receiveEvent); // register event  
-  
-  Timer1.attachInterrupt(isr2);
+
+    Timer1.attachInterrupt(isr2);
   //2400 flicker (top down)
   //2500 flicker on one line
   //2600 flicker (down up)
   Timer1.initialize(2500);
-  
+
 #ifdef DEBUG
   Serial.begin(115200);
   Serial.println("hi");
@@ -160,16 +160,16 @@ void setup() {
 //HINT2: do not handle stuff here!! this will NOT work
 //collect only data here and process it in the main loop!
 void receiveEvent(int howMany) {
-//  if (howMany >= DATA_LEN_4_BIT) {
-//    checkForNewFrames();
-//  }
+  //  if (howMany >= DATA_LEN_4_BIT) {
+  //    checkForNewFrames();
+  //  }
 }
 
 void checkForNewFrames() {
   while (switchFramebuffer==1) {
     //block until blit is done
   }
-  
+
   byte b=0;
   //  byte dataSize = Wire.available();
   //  if (dataSize>=DATA_LEN_4_BIT) {
@@ -234,51 +234,51 @@ long msIrq = 2400;
 #endif
 
 void loop() {
-  
+
   //limit framerate
   if (millis()-time < WAIT_MS_FOR_NEXT_FRAME) {
     return;
   }  
   time = millis();
-  
+
   byte b = Wire.available();
   if (b>=DATA_LEN_4_BIT) { 
     checkForNewFrames();
   }
 
 #ifdef DEBUG
-if (Serial.available()) {
-  char in = Serial.read();
-  if (in=='-') {
-    msIrq-=10;
+  if (Serial.available()) {
+    char in = Serial.read();
+    if (in=='-') {
+      msIrq-=10;
+    }
+    if (in=='+') {
+      msIrq+=10;
+    }
+    if (in=='b') {
+      msIrq-=1;
+    }
+    if (in=='a') {
+      msIrq+=1;
+    }
+    Timer1.stop();
+
+    Serial.print(msIrq);
+    Serial.println(" speed");
+    Timer1.setPeriod(msIrq);
+    Timer1.resume();
   }
-  if (in=='+') {
-    msIrq+=10;
-  }
-  if (in=='b') {
-    msIrq-=1;
-  }
-  if (in=='a') {
-    msIrq+=1;
-  }
-  Timer1.stop();
-  
-  Serial.print(msIrq);
-  Serial.println(" speed");
-  Timer1.setPeriod(msIrq);
-  Timer1.resume();
-}
 #endif
 
 #ifdef POLICE_ANIMATION   
-   cnt++;
-   if (cnt > 4) {
-   //used to debug framw switching
-   switchFramebuffer= 1;
-   cnt=0;
-   }
+  cnt++;
+  if (cnt > 4) {
+    //used to debug framw switching
+    switchFramebuffer= 1;
+    cnt=0;
+  }
 #endif
-   
+
 }
 
 
@@ -299,7 +299,7 @@ void send16BitData(unsigned int data) {
 void send16Blanks() {
   PORT_DATA &= ~BIT_DATA;
   for (byte i = 0; i < 16; i++) {
-      PORT_CLK ^= BIT_CLK;
+    PORT_CLK ^= BIT_CLK;
   } 
 }
 
@@ -309,9 +309,9 @@ void latchData() {
   //6ms - not working, 8ms also buggy
   delayMicroseconds(12);
 
-//At 16Mhz, it takes 1us to execute 16 nop instructions
-//asm("nop\n nop\n nop\n nop\n nop\n nop\n nop\n nop\n");
-//asm("nop\n nop\n nop\n nop\n nop\n nop\n nop\n nop\n");
+  //At 16Mhz, it takes 1us to execute 16 nop instructions
+  //asm("nop\n nop\n nop\n nop\n nop\n nop\n nop\n nop\n");
+  //asm("nop\n nop\n nop\n nop\n nop\n nop\n nop\n nop\n");
 
 
   PORT_LINES &= ~0x80;
@@ -330,30 +330,30 @@ void latchData() {
 }
 
 /*void switchOnDrive(unsigned char line) {
-  PORT_LINES &= ~BIT_LINES;
-  PORT_LINES |= (line << 4);
-  PORT_LINES |= 0x80;
-}*/
+ PORT_LINES &= ~BIT_LINES;
+ PORT_LINES |= (line << 4);
+ PORT_LINES |= 0x80;
+ }*/
 
 void clearData() {
   PORT_DATA &= ~BIT_DATA;
   for (byte i = 0; i < 192; i++) {
-      PORT_CLK ^= BIT_CLK;
+    PORT_CLK ^= BIT_CLK;
   }
 }
 
 
 void clearDisplay() {
-/*  send16BitData(0);
-  clearData();
-  send16BitData(0);
-  clearData();
-  latchData();
-  */
+  /*  send16BitData(0);
+   clearData();
+   send16BitData(0);
+   clearData();
+   latchData();
+   */
 
   PORT_DATA &= ~BIT_DATA;
   for (int i = 0; i < 416; i++) {
-      PORT_CLK ^= BIT_CLK;
+    PORT_CLK ^= BIT_CLK;
   }
 
   //latch data
@@ -390,13 +390,13 @@ static void isr2() {
   // interrupt and the interrupt of the LED update routine do otherwise
   // result in major data loss and data corruption if we wouldn't re-enable
   // the global interrupts here.
-  
+
   //TODO really needed here???? enable interrupt
   sei();
-  
+
   if (currentLine == 8) {
     currentLine = 0;
-    
+
     if (switchFramebuffer==1) {
       switchFramebuffer = 0;
       currentFrameBuffer = !currentFrameBuffer;
@@ -406,60 +406,58 @@ static void isr2() {
   // clear the data of the former interrupt call to avoid flickering
   //use alot of time!
   clearDisplay();
-  
+
   // push data to the MY9221 ICs
   send16Blanks();
-  //send16BitData(0);
-  
+
   // push the blue color value of the current row
-    send16BitData(frameBuffers[currentFrameBuffer][BLUE][currentLine][0]);
-    send16BitData(frameBuffers[currentFrameBuffer][BLUE][currentLine][1]);
-    send16BitData(frameBuffers[currentFrameBuffer][BLUE][currentLine][2]);
-    send16BitData(frameBuffers[currentFrameBuffer][BLUE][currentLine][3]);
-    
-    send16BitData(frameBuffers[currentFrameBuffer][BLUE][currentLine][4]);
-    send16BitData(frameBuffers[currentFrameBuffer][BLUE][currentLine][5]);
-    send16BitData(frameBuffers[currentFrameBuffer][BLUE][currentLine][6]);
-    send16BitData(frameBuffers[currentFrameBuffer][BLUE][currentLine][7]);
-  
+  send16BitData(frameBuffers[currentFrameBuffer][BLUE][currentLine][0]);
+  send16BitData(frameBuffers[currentFrameBuffer][BLUE][currentLine][1]);
+  send16BitData(frameBuffers[currentFrameBuffer][BLUE][currentLine][2]);
+  send16BitData(frameBuffers[currentFrameBuffer][BLUE][currentLine][3]);
+
+  send16BitData(frameBuffers[currentFrameBuffer][BLUE][currentLine][4]);
+  send16BitData(frameBuffers[currentFrameBuffer][BLUE][currentLine][5]);
+  send16BitData(frameBuffers[currentFrameBuffer][BLUE][currentLine][6]);
+  send16BitData(frameBuffers[currentFrameBuffer][BLUE][currentLine][7]);
+
   // push the green color value of the current row
-    send16BitData(frameBuffers[currentFrameBuffer][GREEN][currentLine][0]);
-    send16BitData(frameBuffers[currentFrameBuffer][GREEN][currentLine][1]);
-    send16BitData(frameBuffers[currentFrameBuffer][GREEN][currentLine][2]);
-    send16BitData(frameBuffers[currentFrameBuffer][GREEN][currentLine][3]);
-  
+  send16BitData(frameBuffers[currentFrameBuffer][GREEN][currentLine][0]);
+  send16BitData(frameBuffers[currentFrameBuffer][GREEN][currentLine][1]);
+  send16BitData(frameBuffers[currentFrameBuffer][GREEN][currentLine][2]);
+  send16BitData(frameBuffers[currentFrameBuffer][GREEN][currentLine][3]);
+
   send16Blanks();
-  //send16BitData(0);
 
-    send16BitData(frameBuffers[currentFrameBuffer][GREEN][currentLine][4]);
-    send16BitData(frameBuffers[currentFrameBuffer][GREEN][currentLine][5]);
-    send16BitData(frameBuffers[currentFrameBuffer][GREEN][currentLine][6]);
-    send16BitData(frameBuffers[currentFrameBuffer][GREEN][currentLine][7]);
-  
+  send16BitData(frameBuffers[currentFrameBuffer][GREEN][currentLine][4]);
+  send16BitData(frameBuffers[currentFrameBuffer][GREEN][currentLine][5]);
+  send16BitData(frameBuffers[currentFrameBuffer][GREEN][currentLine][6]);
+  send16BitData(frameBuffers[currentFrameBuffer][GREEN][currentLine][7]);
+
   // push the red color value of the current row
-    send16BitData(frameBuffers[currentFrameBuffer][RED][currentLine][0]);  
-    send16BitData(frameBuffers[currentFrameBuffer][RED][currentLine][1]);    
-    send16BitData(frameBuffers[currentFrameBuffer][RED][currentLine][2]);  
-    send16BitData(frameBuffers[currentFrameBuffer][RED][currentLine][3]);    
+  send16BitData(frameBuffers[currentFrameBuffer][RED][currentLine][0]);  
+  send16BitData(frameBuffers[currentFrameBuffer][RED][currentLine][1]);    
+  send16BitData(frameBuffers[currentFrameBuffer][RED][currentLine][2]);  
+  send16BitData(frameBuffers[currentFrameBuffer][RED][currentLine][3]);    
 
-    send16BitData(frameBuffers[currentFrameBuffer][RED][currentLine][4]);  
-    send16BitData(frameBuffers[currentFrameBuffer][RED][currentLine][5]);    
-    send16BitData(frameBuffers[currentFrameBuffer][RED][currentLine][6]);  
-    send16BitData(frameBuffers[currentFrameBuffer][RED][currentLine][7]);
-    
+  send16BitData(frameBuffers[currentFrameBuffer][RED][currentLine][4]);  
+  send16BitData(frameBuffers[currentFrameBuffer][RED][currentLine][5]);    
+  send16BitData(frameBuffers[currentFrameBuffer][RED][currentLine][6]);  
+  send16BitData(frameBuffers[currentFrameBuffer][RED][currentLine][7]);
+
   // since the following code is timing-sensitive we have to disable
   // the global interrupts again to avoid ghosting / flickering of 
   // the other lines that shouldn't be active at all.
   cli(); //disable interrupt
 
- // latchData();
+  // latchData();
   PORT_DATA &= ~BIT_DATA;
   //6ms - not working, 8ms also buggy
   delayMicroseconds(12);
 
-//At 16Mhz, it takes 1us to execute 16 nop instructions
-//asm("nop\n nop\n nop\n nop\n nop\n nop\n nop\n nop\n");
-//asm("nop\n nop\n nop\n nop\n nop\n nop\n nop\n nop\n");
+  //At 16Mhz, it takes 1us to execute 16 nop instructions
+  //asm("nop\n nop\n nop\n nop\n nop\n nop\n nop\n nop\n");
+  //asm("nop\n nop\n nop\n nop\n nop\n nop\n nop\n nop\n");
 
 
   PORT_LINES &= ~0x80;
@@ -476,17 +474,18 @@ static void isr2() {
   PORT_DATA ^= BIT_DATA;
   PORT_DATA ^= BIT_DATA;
 
-// ------------------------------------------------------
+  // ------------------------------------------------------
   // activate current line
-//  switchOnDrive(currentLine++);
+  //  switchOnDrive(currentLine++);
   PORT_LINES &= ~BIT_LINES;
   PORT_LINES |= (currentLine << 4);
   PORT_LINES |= 0x80;
 
   PORTD &= ~0x04;
-  
+
   currentLine++;
 }
+
 
 
 
