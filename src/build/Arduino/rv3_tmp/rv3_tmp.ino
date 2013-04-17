@@ -123,6 +123,8 @@ void setup() {
   for (byte b=0; b<8; b++) {  
     for (byte row=0; row<8; row++) {
       frameBuffers[0][RED][row][b] = 255;
+      frameBuffers[0][BLUE][row][b] = 255;
+      frameBuffers[1][RED][row][b] = 255;    
       frameBuffers[1][BLUE][row][b] = 255;    
       //frameBuffers[0][GREEN][row][b] = 255;
       //frameBuffers[1][GREEN][row][b] = 255;    
@@ -134,6 +136,7 @@ void setup() {
   Wire.onReceive(receiveEvent); // register event  
 
     Timer1.attachInterrupt(isr2);
+  //1730 is the minimum
   //2400 flicker (top down)
   //2500 flicker on one line
   //2600 flicker (down up)
@@ -151,9 +154,9 @@ void setup() {
 //HINT2: do not handle stuff here!! this will NOT work
 //collect only data here and process it in the main loop!
 void receiveEvent(int howMany) {
-  //  if (howMany >= DATA_LEN_4_BIT) {
-  //    checkForNewFrames();
-  //  }
+/*    if (howMany >= DATA_LEN_4_BIT) {
+      checkForNewFrames();
+    }*/
 }
 
 void checkForNewFrames() {
@@ -175,8 +178,8 @@ void checkForNewFrames() {
     col1 = Wire.read();
     col0 = col1 >> 4;
     col1 &= 0x0f;
-    frameBuffers[fbNotInUse][RED][row][col++] = col0<<4;
-    frameBuffers[fbNotInUse][RED][row][col++] = col1<<4;
+    frameBuffers[fbNotInUse][RED][row][col++] = col0;
+    frameBuffers[fbNotInUse][RED][row][col++] = col1;
     if (col==7) {
       col=0;
       row++;
@@ -189,8 +192,8 @@ void checkForNewFrames() {
     col1 = Wire.read();
     col0 = col1 >> 4;
     col1 &= 0x0f;
-    frameBuffers[fbNotInUse][GREEN][row][col++] = col0<<4;
-    frameBuffers[fbNotInUse][GREEN][row][col++] = col1<<4;
+    frameBuffers[fbNotInUse][GREEN][row][col++] = col0;
+    frameBuffers[fbNotInUse][GREEN][row][col++] = col1;
     if (col==7) {
       col=0;
       row++;
@@ -203,8 +206,8 @@ void checkForNewFrames() {
     col1 = Wire.read();
     col0 = col1 >> 4;
     col1 &= 0x0f;
-    frameBuffers[fbNotInUse][BLUE][row][col++] = col0<<4;
-    frameBuffers[fbNotInUse][BLUE][row][col++] = col1<<4;
+    frameBuffers[fbNotInUse][BLUE][row][col++] = col0;
+    frameBuffers[fbNotInUse][BLUE][row][col++] = col1;
     if (col==7) {
       col=0;
       row++;
@@ -221,7 +224,7 @@ int cnt;
 #endif
 
 #ifdef DEBUG
-long msIrq = 2400;
+long msIrq = 2500;
 #endif
 
 
@@ -276,8 +279,8 @@ void loop() {
 }
 
 
-void send16BitData(unsigned int data) {
-  for (byte i = 0; i < 16; i++) {
+void send16BitData(byte data) {
+/*  for (byte i = 0; i < 16; i++) {
     if (data & 0x8000) {
       PORT_DATA |=  BIT_DATA;
     } 
@@ -286,7 +289,37 @@ void send16BitData(unsigned int data) {
     }
     PORT_CLK ^= BIT_CLK;
     data <<= 1;
+  }*/
+
+  PORT_DATA &= ~BIT_DATA;
+  PORT_CLK ^= BIT_CLK;
+  PORT_CLK ^= BIT_CLK;
+  PORT_CLK ^= BIT_CLK;
+  PORT_CLK ^= BIT_CLK;
+  
+  PORT_CLK ^= BIT_CLK;
+  PORT_CLK ^= BIT_CLK;
+  PORT_CLK ^= BIT_CLK;
+  PORT_CLK ^= BIT_CLK;
+  
+  //only 4 bytes are relevant
+  for (byte i = 0; i < 4; i++) {
+    if (data & 0x8) {
+      PORT_DATA |=  BIT_DATA;
+    } 
+    else {
+      PORT_DATA &= ~BIT_DATA;
+    }
+    PORT_CLK ^= BIT_CLK;
+    data <<= 1;
   }
+  
+  //lower 4 bytes are low
+  PORT_DATA &= ~BIT_DATA;
+  PORT_CLK ^= BIT_CLK;
+  PORT_CLK ^= BIT_CLK;
+  PORT_CLK ^= BIT_CLK;
+  PORT_CLK ^= BIT_CLK;
 }
 
 
