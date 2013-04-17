@@ -75,6 +75,7 @@ Rainbowduino V3 firmware capable of streaming 24bit RGB frames with up
 #define WAIT_MS_FOR_NEXT_FRAME 35
 unsigned long time;
 
+#define DELAY_PER_LINE 10
 
 //#define DEBUG 1
 //#define POLICE_ANIMATION 1
@@ -96,14 +97,12 @@ volatile byte switchFramebuffer;
 // the current line the LED update routine will push color data for
 byte currentLine;
 
+// --------------------------------------------------------------------------------
 void setup() {
   // initialize global variables used to update the LEDs
   currentFrameBuffer = 0;
   currentLine = 0;
   switchFramebuffer = 0;
-
-  // disable all internal interrupts
-  //cli();
 
   // initialize LED update routine and MY9221 state
   DDR_LINES  |=  BIT_LINES;
@@ -116,14 +115,6 @@ void setup() {
   DDRB |= 0x20;
   // clear the display to get a clean state
   clearDisplay();
-
-  // init TIMER 1 (trigger every ~1250us)
-  /*  TCCR1A = 0;
-   TCCR1B = _BV(WGM13);
-   ICR1 = 10000;
-   TIMSK1 = _BV(TOIE1);
-   TCNT1 = 0;
-   TCCR1B |= _BV(CS10);*/
 
   // re-enable all internal interrupts
   sei();
@@ -233,6 +224,9 @@ int cnt;
 long msIrq = 2400;
 #endif
 
+
+// --------------------------------------------------------------------------------
+
 void loop() {
 
   //limit framerate
@@ -298,26 +292,40 @@ void send16BitData(unsigned int data) {
 
 void send16Blanks() {
   PORT_DATA &= ~BIT_DATA;
-  for (byte i = 0; i < 16; i++) {
-    PORT_CLK ^= BIT_CLK;
-  } 
+  
+  PORT_CLK ^= BIT_CLK;
+  PORT_CLK ^= BIT_CLK;
+  PORT_CLK ^= BIT_CLK;
+  PORT_CLK ^= BIT_CLK;
+  
+  PORT_CLK ^= BIT_CLK;
+  PORT_CLK ^= BIT_CLK;
+  PORT_CLK ^= BIT_CLK;
+  PORT_CLK ^= BIT_CLK;
+  
+  PORT_CLK ^= BIT_CLK;
+  PORT_CLK ^= BIT_CLK;
+  PORT_CLK ^= BIT_CLK;
+  PORT_CLK ^= BIT_CLK;
+  
+  PORT_CLK ^= BIT_CLK;
+  PORT_CLK ^= BIT_CLK;
+  PORT_CLK ^= BIT_CLK;
+  PORT_CLK ^= BIT_CLK;
 }
 
 
 void latchData() {
   PORT_DATA &= ~BIT_DATA;
   //6ms - not working, 8ms also buggy
-  delayMicroseconds(12);
+  delayMicroseconds(DELAY_PER_LINE);
 
   //At 16Mhz, it takes 1us to execute 16 nop instructions
   //asm("nop\n nop\n nop\n nop\n nop\n nop\n nop\n nop\n");
   //asm("nop\n nop\n nop\n nop\n nop\n nop\n nop\n nop\n");
 
-
   PORT_LINES &= ~0x80;
-  /*  for (unsigned char i = 0; i < 8; i++) {
-   PORT_DATA ^= BIT_DATA;
-   }*/
+
   PORT_DATA ^= BIT_DATA;
   PORT_DATA ^= BIT_DATA;
   PORT_DATA ^= BIT_DATA;
@@ -357,7 +365,7 @@ void clearDisplay() {
   }
 
   //latch data
-  delayMicroseconds(12);
+  delayMicroseconds(DELAY_PER_LINE);
   PORT_LINES &= ~0x80;
 
   PORT_DATA ^= BIT_DATA;
@@ -453,7 +461,7 @@ static void isr2() {
   // latchData();
   PORT_DATA &= ~BIT_DATA;
   //6ms - not working, 8ms also buggy
-  delayMicroseconds(12);
+  delayMicroseconds(DELAY_PER_LINE);
 
   //At 16Mhz, it takes 1us to execute 16 nop instructions
   //asm("nop\n nop\n nop\n nop\n nop\n nop\n nop\n nop\n");
