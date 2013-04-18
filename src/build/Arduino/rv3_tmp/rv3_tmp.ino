@@ -1,43 +1,14 @@
 /*
-Rainbowduino V3 firmware capable of streaming 24bit RGB frames with up
- to 35fps via the USB connector of the Rainbowduino V3 controller.
+Rainbowduino V3 firmware 
+recieve data via i2c bus (96 bytes per frame) and display result on screen
  
+origianl source by 
  Author:   Markus Lang (m@rkus-lang.de)
  Websites: http://programmers-pain.de/
  https://code.google.com/p/rainbowduino-v3-streaming-firmware/
  
- This firmware is based on several Rainbowduino related firmwares like:
- neorainbowduino:  http://code.google.com/p/neorainbowduino/
- rainbowdash:      http://code.google.com/p/rainbowdash/
- seeedstudio.com:  http://www.seeedstudio.com/wiki/Rainbowduino_v3.0
- 
- The Java part splits a full 8x8 RGB frame (3 colors * 64 LEDs = 192byte)
- into four frame fragments (each 48byte) to get around the 64byte default
- buffer size of the Arduino hardware serial implementation. Each fragment
- will be extended with the HEADER bits and a frame fragment index to
- be able to reconstruct the full frame in the correct order inside this
- firmware. 
- 
- Splitting up the frame into fragments avoids running into data corruption
- / data loss if the Java part sends more bytes than the Arduino controller
- can buffer. For every frame fragment the controller will send an ACK REPLY
- message to the Java code so that the next fragment will be send.
- 
- The firmware is able to handle incomplete frames as well as CRC checksum
- errors of the transferred LED color data so that it's able to signal those
- error conditions to the Java API.
- 
- The LED update routine of this firmware is just a rewrite of the original
- seeedstudio.com firmware (http://www.seeedstudio.com/wiki/Rainbowduino_v3.0)
- including some changes regarding the interrupt handling to allow the
- controller to update the LEDs and receiving incoming serial data at the
- same time.
- 
- Hints:
- https://github.com/sysrun/GroveLedBar/blob/master/GroveLedbar.cpp
- 
- Open Issues: 
- -why do we need an interupt routine?
+heavy optimized and changed by Michael Vogt (michu@neophob.com)
+ Website: http://www.pixelinvaders.ch
  
  */
 #include <TimerOne.h>
@@ -130,10 +101,9 @@ void setup() {
   }
 
   Wire.begin(I2C_ADDRESS);                // join i2c bus with address #4
-  //TODO really not needed here????
-  Wire.onReceive(receiveEvent); // register event  
+  Wire.onReceive(receiveEvent);           // register event  
 
-    Timer1.attachInterrupt(isr2);
+  Timer1.attachInterrupt(isr2);           // Start ISR routine
   //1730 is the minimum
   //2400 flicker (top down)
   //2500 flicker on one line
@@ -148,8 +118,7 @@ void setup() {
 }
 
 
-//get data from master - HINT: this is a ISR call!
-//HINT2: do not handle stuff here!! this will NOT work
+//get data from master - HINT: this is a ISR call! do not handle stuff here!! this will NOT work
 //collect only data here and process it in the main loop!
 void receiveEvent(int howMany) {
 /*    if (howMany >= DATA_LEN_4_BIT) {
@@ -371,6 +340,29 @@ void send32BitData(byte data) {
 void send16Blanks() {
   PORT_DATA &= ~BIT_DATA;
   
+  PORT_CLK ^= BIT_CLK;
+  PORT_CLK ^= BIT_CLK;
+  PORT_CLK ^= BIT_CLK;
+  PORT_CLK ^= BIT_CLK;
+  
+  PORT_CLK ^= BIT_CLK;
+  PORT_CLK ^= BIT_CLK;
+  PORT_CLK ^= BIT_CLK;
+  PORT_CLK ^= BIT_CLK;
+  
+  PORT_CLK ^= BIT_CLK;
+  PORT_CLK ^= BIT_CLK;
+  PORT_CLK ^= BIT_CLK;
+  PORT_CLK ^= BIT_CLK;
+  
+  PORT_CLK ^= BIT_CLK;
+  PORT_CLK ^= BIT_CLK;
+  PORT_CLK ^= BIT_CLK;
+  PORT_CLK ^= BIT_CLK;
+}
+
+//if the data line is already zero, call this
+void send16BlanksWithoutDataLineInit() {
   PORT_CLK ^= BIT_CLK;
   PORT_CLK ^= BIT_CLK;
   PORT_CLK ^= BIT_CLK;

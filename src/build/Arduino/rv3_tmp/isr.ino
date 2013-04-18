@@ -2,7 +2,7 @@ static void isr2() {
   // re-enable global interrupts, this needs some explanation:
   // ---------------------------------------------------------
   // to allow the internal interrupt of the Arduino framework to handle
-  // incoming serial data we need to re-enable the global interrupts
+  // incoming i2c data we need to re-enable the global interrupts
   // inside this interrupt call of the LED update routine.
   // usually that's an stupid idea since the LED update rountine interrupt
   // could also be called a second time while this interrupt call is still
@@ -17,11 +17,12 @@ static void isr2() {
   // interrupt and the interrupt of the LED update routine do otherwise
   // result in major data loss and data corruption if we wouldn't re-enable
   // the global interrupts here.
-
-  //TODO really needed here???? enable interrupt
   sei();
 
-  if (currentLine == 8) {
+  //increment line counter
+  currentLine++;
+
+  if (currentLine > 7) {
     currentLine = 0;
 
     if (switchFramebuffer==1) {
@@ -37,7 +38,7 @@ static void isr2() {
   clearDisplay();
 
   // push data to the MY9221 ICs
-  send16Blanks();
+  send16BlanksWithoutDataLineInit();
 
   // push the blue color value of the current row
   send32BitData(frameBuffers[currentFrameBuffer][BLUE][ofs+0]);
@@ -97,7 +98,5 @@ static void isr2() {
   PORT_LINES |= 0x80;
 
   PORTD &= ~0x04;
-
-  currentLine++;
 }
 
