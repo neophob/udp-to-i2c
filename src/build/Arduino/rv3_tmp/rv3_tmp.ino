@@ -131,9 +131,7 @@ void checkForNewFrames() {
     //block until blit is done
   }
 
-  byte b=0;
-  //  byte dataSize = Wire.available();
-  //  if (dataSize>=DATA_LEN_4_BIT) {
+  byte b;
   //read image data (payload) - an image size is exactly 96 bytes
   //frameBuffers[currentFrameBuffer][currentColor][currentRow][currentColumn] = serialData;
 
@@ -154,9 +152,8 @@ void checkForNewFrames() {
   }
 
   switchFramebuffer = 1;
-
-  //  }
 }
+
 
 #ifdef POLICE_ANIMATION
 int cnt;
@@ -288,7 +285,7 @@ void send32BitData(byte data) {
   
   //only 4 bytes are relevant
   for (byte i = 0; i < 4; i++) {
-    if (data & 0x8) {
+    if (data & 0x80) {
       PORT_DATA |=  BIT_DATA;
     } 
     else {
@@ -318,7 +315,7 @@ void send32BitData(byte data) {
   PORT_CLK ^= BIT_CLK;
   
   for (byte i = 0; i < 4; i++) {
-    if (data & 0x8) {
+    if (data & 0x80) {
       PORT_DATA |=  BIT_DATA;
     } 
     else {

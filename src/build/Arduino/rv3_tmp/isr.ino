@@ -77,9 +77,6 @@ static void isr2() {
 
 
   PORT_LINES &= ~0x80;
-  /*  for (unsigned char i = 0; i < 8; i++) {
-   PORT_DATA ^= BIT_DATA;
-   }*/
   PORT_DATA ^= BIT_DATA;
   PORT_DATA ^= BIT_DATA;
   PORT_DATA ^= BIT_DATA;
