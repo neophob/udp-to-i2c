@@ -89,7 +89,7 @@ const unsigned char BLUE = 2;
 
 // byte array used as frame buffers for the currently received and displayed frame
 // (2 buffers, RGB colors, 8 rows, 8 columns)
-byte frameBuffers[2][NUMBER_OF_COLORS][8][8];
+byte frameBuffers[2][NUMBER_OF_COLORS][32];
 // the currently used frame buffer by the LED update routine
 volatile byte currentFrameBuffer;
 volatile byte switchFramebuffer;
@@ -120,15 +120,13 @@ void setup() {
   sei();
 
   //initial image: i like yellow...
-  for (byte b=0; b<8; b++) {  
-    for (byte row=0; row<8; row++) {
-      frameBuffers[0][RED][row][b] = 255;
-      frameBuffers[0][BLUE][row][b] = 255;
-      frameBuffers[1][RED][row][b] = 255;    
-      frameBuffers[1][BLUE][row][b] = 255;    
+  for (byte b=0; b<32; b++) {  
+      frameBuffers[0][RED][b] = 255;
+      frameBuffers[0][BLUE][b] = 255;
+      frameBuffers[1][RED][b] = 255;    
+      frameBuffers[1][BLUE][b] = 255;    
       //frameBuffers[0][GREEN][row][b] = 255;
-      //frameBuffers[1][GREEN][row][b] = 255;    
-    }
+      //frameBuffers[1][GREEN][row][b] = 255;        
   }
 
   Wire.begin(I2C_ADDRESS);                // join i2c bus with address #4
@@ -169,49 +167,21 @@ void checkForNewFrames() {
   //  if (dataSize>=DATA_LEN_4_BIT) {
   //read image data (payload) - an image size is exactly 96 bytes
   //frameBuffers[currentFrameBuffer][currentColor][currentRow][currentColumn] = serialData;
-  byte col0,col1;
-  byte fbNotInUse = !currentFrameBuffer;
 
-  byte row=0;
+  byte fbNotInUse = !currentFrameBuffer;
   byte col=0;
   for (b=0; b<32; b++) {
-    col1 = Wire.read();
-    col0 = col1 >> 4;
-    col1 &= 0x0f;
-    frameBuffers[fbNotInUse][RED][row][col++] = col0;
-    frameBuffers[fbNotInUse][RED][row][col++] = col1;
-    if (col==7) {
-      col=0;
-      row++;
-    }
+    frameBuffers[fbNotInUse][RED][col++] = Wire.read();
   }    
 
   col=0;
-  row=0;
   for (b=0; b<32; b++) {
-    col1 = Wire.read();
-    col0 = col1 >> 4;
-    col1 &= 0x0f;
-    frameBuffers[fbNotInUse][GREEN][row][col++] = col0;
-    frameBuffers[fbNotInUse][GREEN][row][col++] = col1;
-    if (col==7) {
-      col=0;
-      row++;
-    }
+    frameBuffers[fbNotInUse][GREEN][col++] = Wire.read();
   }
 
   col=0;
-  row=0;
   for (b=0; b<32; b++) {
-    col1 = Wire.read();
-    col0 = col1 >> 4;
-    col1 &= 0x0f;
-    frameBuffers[fbNotInUse][BLUE][row][col++] = col0;
-    frameBuffers[fbNotInUse][BLUE][row][col++] = col1;
-    if (col==7) {
-      col=0;
-      row++;
-    }
+    frameBuffers[fbNotInUse][BLUE][col++] = Wire.read();
   }
 
   switchFramebuffer = 1;
@@ -323,6 +293,81 @@ void send16BitData(byte data) {
 }
 
 
+void send32BitData(byte data) {
+/*  for (byte i = 0; i < 16; i++) {
+    if (data & 0x8000) {
+      PORT_DATA |=  BIT_DATA;
+    } 
+    else {
+      PORT_DATA &= ~BIT_DATA;
+    }
+    PORT_CLK ^= BIT_CLK;
+    data <<= 1;
+  }*/
+
+  //first 8 bit's are always zero...
+  PORT_DATA &= ~BIT_DATA;
+  PORT_CLK ^= BIT_CLK;
+  PORT_CLK ^= BIT_CLK;
+  PORT_CLK ^= BIT_CLK;
+  PORT_CLK ^= BIT_CLK;
+  
+  PORT_CLK ^= BIT_CLK;
+  PORT_CLK ^= BIT_CLK;
+  PORT_CLK ^= BIT_CLK;
+  PORT_CLK ^= BIT_CLK;
+  
+  //only 4 bytes are relevant
+  for (byte i = 0; i < 4; i++) {
+    if (data & 0x8) {
+      PORT_DATA |=  BIT_DATA;
+    } 
+    else {
+      PORT_DATA &= ~BIT_DATA;
+    }
+    PORT_CLK ^= BIT_CLK;
+    data <<= 1;
+  }
+  
+  //lower 4 bytes are low
+  PORT_DATA &= ~BIT_DATA;
+  PORT_CLK ^= BIT_CLK;
+  PORT_CLK ^= BIT_CLK;
+  PORT_CLK ^= BIT_CLK;
+  PORT_CLK ^= BIT_CLK;
+  
+  
+  // -- second word send out here --
+  PORT_CLK ^= BIT_CLK;
+  PORT_CLK ^= BIT_CLK;
+  PORT_CLK ^= BIT_CLK;
+  PORT_CLK ^= BIT_CLK;
+  
+  PORT_CLK ^= BIT_CLK;
+  PORT_CLK ^= BIT_CLK;
+  PORT_CLK ^= BIT_CLK;
+  PORT_CLK ^= BIT_CLK;
+  
+  for (byte i = 0; i < 4; i++) {
+    if (data & 0x8) {
+      PORT_DATA |=  BIT_DATA;
+    } 
+    else {
+      PORT_DATA &= ~BIT_DATA;
+    }
+    PORT_CLK ^= BIT_CLK;
+    data <<= 1;
+  }
+  
+  //lower 4 bytes are low
+  PORT_DATA &= ~BIT_DATA;
+  PORT_CLK ^= BIT_CLK;
+  PORT_CLK ^= BIT_CLK;
+  PORT_CLK ^= BIT_CLK;
+  PORT_CLK ^= BIT_CLK;  
+}
+
+
 void send16Blanks() {
   PORT_DATA &= ~BIT_DATA;
   
@@ -411,123 +456,5 @@ void clearDisplay() {
   PORT_DATA ^= BIT_DATA;
   PORT_DATA ^= BIT_DATA;
 }
-
-static void isr2() {
-  // re-enable global interrupts, this needs some explanation:
-  // ---------------------------------------------------------
-  // to allow the internal interrupt of the Arduino framework to handle
-  // incoming serial data we need to re-enable the global interrupts
-  // inside this interrupt call of the LED update routine.
-  // usually that's an stupid idea since the LED update rountine interrupt
-  // could also be called a second time while this interrupt call is still
-  // running - this would result in a hanging controller.
-  // since we know that the interrupt is called in a 1250us interval and
-  // the code in this method takes around ~650us to finish we still have
-  // enough buffer to allow the internal interrupt to handle incoming serial
-  // data without risking to block the controller. the time between the next
-  // LED update rountine call is also sufficient to give the controller
-  // enough time to parse the incoming serial data.
-  // this setup was the easiest way out of the problem that the internal
-  // interrupt and the interrupt of the LED update routine do otherwise
-  // result in major data loss and data corruption if we wouldn't re-enable
-  // the global interrupts here.
-
-  //TODO really needed here???? enable interrupt
-  sei();
-
-  if (currentLine == 8) {
-    currentLine = 0;
-
-    if (switchFramebuffer==1) {
-      switchFramebuffer = 0;
-      currentFrameBuffer = !currentFrameBuffer;
-    }
-  }
-
-  // clear the data of the former interrupt call to avoid flickering
-  //use alot of time!
-  clearDisplay();
-
-  // push data to the MY9221 ICs
-  send16Blanks();
-
-  // push the blue color value of the current row
-  send16BitData(frameBuffers[currentFrameBuffer][BLUE][currentLine][0]);
-  send16BitData(frameBuffers[currentFrameBuffer][BLUE][currentLine][1]);
-  send16BitData(frameBuffers[currentFrameBuffer][BLUE][currentLine][2]);
-  send16BitData(frameBuffers[currentFrameBuffer][BLUE][currentLine][3]);
-
-  send16BitData(frameBuffers[currentFrameBuffer][BLUE][currentLine][4]);
-  send16BitData(frameBuffers[currentFrameBuffer][BLUE][currentLine][5]);
-  send16BitData(frameBuffers[currentFrameBuffer][BLUE][currentLine][6]);
-  send16BitData(frameBuffers[currentFrameBuffer][BLUE][currentLine][7]);
-
-  // push the green color value of the current row
-  send16BitData(frameBuffers[currentFrameBuffer][GREEN][currentLine][0]);
-  send16BitData(frameBuffers[currentFrameBuffer][GREEN][currentLine][1]);
-  send16BitData(frameBuffers[currentFrameBuffer][GREEN][currentLine][2]);
-  send16BitData(frameBuffers[currentFrameBuffer][GREEN][currentLine][3]);
-
-  send16Blanks();
-
-  send16BitData(frameBuffers[currentFrameBuffer][GREEN][currentLine][4]);
-  send16BitData(frameBuffers[currentFrameBuffer][GREEN][currentLine][5]);
-  send16BitData(frameBuffers[currentFrameBuffer][GREEN][currentLine][6]);
-  send16BitData(frameBuffers[currentFrameBuffer][GREEN][currentLine][7]);
-
-  // push the red color value of the current row
-  send16BitData(frameBuffers[currentFrameBuffer][RED][currentLine][0]);  
-  send16BitData(frameBuffers[currentFrameBuffer][RED][currentLine][1]);    
-  send16BitData(frameBuffers[currentFrameBuffer][RED][currentLine][2]);  
-  send16BitData(frameBuffers[currentFrameBuffer][RED][currentLine][3]);    
-
-  send16BitData(frameBuffers[currentFrameBuffer][RED][currentLine][4]);  
-  send16BitData(frameBuffers[currentFrameBuffer][RED][currentLine][5]);    
-  send16BitData(frameBuffers[currentFrameBuffer][RED][currentLine][6]);  
-  send16BitData(frameBuffers[currentFrameBuffer][RED][currentLine][7]);
-
-  // since the following code is timing-sensitive we have to disable
-  // the global interrupts again to avoid ghosting / flickering of 
-  // the other lines that shouldn't be active at all.
-  cli(); //disable interrupt
-
-  // latchData();
-  PORT_DATA &= ~BIT_DATA;
-  //6ms - not working, 8ms also buggy
-  delayMicroseconds(DELAY_PER_LINE);
-
-  //At 16Mhz, it takes 1us to execute 16 nop instructions
-  //asm("nop\n nop\n nop\n nop\n nop\n nop\n nop\n nop\n");
-  //asm("nop\n nop\n nop\n nop\n nop\n nop\n nop\n nop\n");
-
-
-  PORT_LINES &= ~0x80;
-  /*  for (unsigned char i = 0; i < 8; i++) {
-   PORT_DATA ^= BIT_DATA;
-   }*/
-  PORT_DATA ^= BIT_DATA;
-  PORT_DATA ^= BIT_DATA;
-  PORT_DATA ^= BIT_DATA;
-  PORT_DATA ^= BIT_DATA;
-
-  PORT_DATA ^= BIT_DATA;
-  PORT_DATA ^= BIT_DATA;
-  PORT_DATA ^= BIT_DATA;
-  PORT_DATA ^= BIT_DATA;
-
-  // ------------------------------------------------------
-  // activate current line
-  //  switchOnDrive(currentLine++);
-  PORT_LINES &= ~BIT_LINES;
-  PORT_LINES |= (currentLine << 4);
-  PORT_LINES |= 0x80;
-
-  PORTD &= ~0x04;
-
-  currentLine++;
-}
-
-
-
 
 
