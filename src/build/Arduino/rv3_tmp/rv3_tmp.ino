@@ -41,12 +41,13 @@ heavy optimized and changed by Michael Vogt (michu@neophob.com)
 
 //32 byte per color
 #define DATA_LEN_4_BIT 96
-#define I2C_ADDRESS 4
+#define I2C_ADDRESS 6
 
 #define WAIT_MS_FOR_NEXT_FRAME 35
 unsigned long time;
 
 #define DELAY_PER_LINE 10
+#define ISR_CALL_TIME 1490
 
 //#define DEBUG 1
 //#define POLICE_ANIMATION 1
@@ -90,14 +91,32 @@ void setup() {
   // re-enable all internal interrupts
   sei();
 
-  //initial image: i like yellow...
-  for (byte b=0; b<32; b++) {  
-      frameBuffers[0][RED][b] = 255;
-      frameBuffers[0][BLUE][b] = 255;
-      frameBuffers[1][RED][b] = 255;    
-      frameBuffers[1][BLUE][b] = 255;    
-      //frameBuffers[0][GREEN][row][b] = 255;
-      //frameBuffers[1][GREEN][row][b] = 255;        
+#ifdef DEBUG
+  Serial.begin(115200);
+  Serial.println("hi");
+#endif
+  
+
+  byte b;
+  //initial image: remember, one byte store two colors
+  for (b=0; b<32; b++) {  
+      frameBuffers[0][RED][b] = 0x77;
+      frameBuffers[0][BLUE][b] = 0x77;
+      frameBuffers[1][RED][b] = 0x77;    
+      frameBuffers[1][BLUE][b] = 0x77;    
+  }
+
+  //indicate i2c address
+  for (b=0; b<I2C_ADDRESS/2; b++) {
+      frameBuffers[0][GREEN][b] = 255;
+      frameBuffers[1][GREEN][b] = 255;    
+  }
+  
+  float f = I2C_ADDRESS/(float)2;
+  int i = I2C_ADDRESS/2;  
+  if (f>i) {
+      frameBuffers[0][GREEN][b] = 240;
+      frameBuffers[1][GREEN][b] = 240;    
   }
 
   Wire.begin(I2C_ADDRESS);                // join i2c bus with address #4
@@ -108,12 +127,7 @@ void setup() {
   //2400 flicker (top down)
   //2500 flicker on one line
   //2600 flicker (down up)
-  Timer1.initialize(2500);
-
-#ifdef DEBUG
-  Serial.begin(115200);
-  Serial.println("hi");
-#endif
+  Timer1.initialize(ISR_CALL_TIME);
 
 }
 
@@ -160,7 +174,7 @@ int cnt;
 #endif
 
 #ifdef DEBUG
-long msIrq = 2500;
+long msIrq = ISR_CALL_TIME;
 #endif
 
 
