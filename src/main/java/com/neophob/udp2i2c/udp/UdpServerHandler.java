@@ -63,7 +63,8 @@ public class UdpServerHandler extends SimpleChannelUpstreamHandler {
 			}
 		} catch (Exception ex) {
 			StatisticHelper.INSTANCE.incrementAndGetError();
-			System.err.println("failed to send data to i2c address "+i2cAddress);
+			System.err.println("Failed to send data to i2c address "+i2cAddress+"."+
+					"Packets recieved: "+StatisticHelper.INSTANCE.getPacketCount()+", errors: "+StatisticHelper.INSTANCE.getErrorCount());
 			ex.printStackTrace();
 		}
 

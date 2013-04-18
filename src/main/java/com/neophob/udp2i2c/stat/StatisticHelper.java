@@ -28,5 +28,8 @@ public enum StatisticHelper {
 		return errors.get();
 	}
 	
+	public long getPacketCount() {
+		return packetsRecieved.get();
+	}
 
 }
