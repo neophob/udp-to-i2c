@@ -13,8 +13,8 @@ public class Runner {
 	private static final String VERSION = "0.1";
 	
 	private static void displayHelp() {
-        System.out.println("Usage:\t\tRunner [-p port] [-b bus] [-t i2c_targets]\n");
-		System.out.println("Example:\tRunner -p 65506 -b 1 -t 4:5:6:7");
+        System.out.println("Usage:\t\tRunner [-p port] [-b bus] [-d delay] [-t i2c_targets]\n");
+		System.out.println("Example:\tRunner -p 65506 -b 1 -d 10 -t 4:5:6:7");
 		System.out.println("\t");
 	}
 
@@ -33,6 +33,7 @@ public class Runner {
         List<Integer> i2cAddress = new ArrayList<Integer>();
         int port = -1;
         int bus = -1;        
+        int delay = -1;
         
         int i=0;
         while (i < args.length && args[i].startsWith("-")) {
@@ -43,6 +44,14 @@ public class Runner {
         			port = Integer.parseInt(args[i++]);
         		} else {
                     System.err.println("-port requires an integer value");
+        		}
+        	}
+
+        	if (arg.equals("-d")) {
+        		if (i < args.length) { 
+        			delay = Integer.parseInt(args[i++]);
+        		} else {
+                    System.err.println("-delay requires an integer value");
         		}
         	}
 
@@ -84,7 +93,7 @@ public class Runner {
         
         final I2CBus i2cBus = I2CFactory.getInstance(bus);
         
-        I2cConfig i2cConfig = new I2cConfig(i2cBus, i2cAddress);
+        I2cConfig i2cConfig = new I2cConfig(i2cBus, i2cAddress, delay);
         UdpServer srv = new UdpServer(port, i2cConfig);
         
         srv.run();
