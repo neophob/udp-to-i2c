@@ -90,6 +90,7 @@ public class Runner {
         	System.out.print(a+" ");
         }
         System.out.println();
+        System.out.println("Delay "+delay+"ms after each i2c transmission");
         
         final I2CBus i2cBus = I2CFactory.getInstance(bus);
         
