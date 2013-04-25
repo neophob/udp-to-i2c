@@ -92,6 +92,10 @@ Java Version:
 
 ## Example PixelController Config
 
+You can download PixelController on the [Google Code Site](https://code.google.com/p/pixelcontroller/)
+
+[Example PixelController config file](https://github.com/neophob/udp-to-i2c/blob/master/src/build/PixelController/config.properties)
+
 ## Errors
 
 If you see this error:

@@ -57,6 +57,11 @@
 			<outputDirectory>/Arduino</outputDirectory>
 			<filtered>false</filtered>
 		</fileSet>
+		<fileSet>
+			<directory>${basedir}/src/build/PixelController</directory>
+			<outputDirectory>/PixelController</outputDirectory>
+			<filtered>false</filtered>
+		</fileSet>
 	</fileSets>
 
 	<!-- collect external libs -->
