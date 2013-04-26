@@ -22,6 +22,8 @@ Make sure the I2C module is loaded. I wrote a little guide here:
 
 You need to increase the Arduino I2C buffer size and speed, make sure you read the blog post above. After that load this firmware on your Rainbowduino (ignore the stupid name!):
 
+You need to have the [Timer 1 Library installed](https://code.google.com/p/arduino-timerone/downloads/list)
+
 [The Rainbowduino v3 firmware](https://github.com/neophob/udp-to-i2c/tree/master/src/build/Arduino/rv3_tmp)
 
 Hint: don't forget to use a unique I2C address for each rainbowduino!
