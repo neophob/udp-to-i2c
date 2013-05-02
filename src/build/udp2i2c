@@ -17,7 +17,7 @@
 ### END INIT INFO
 
 JAVA_HOME="/usr/local/java/"
-args="-p 65506 -b 1 -t 4"
+args="-p 65506 -b 1 -t 4 -d 5"
 application_dir="/home/pi/udp2i2c/"
 logfile="${application_dir}udp2i2c.log"
 runnable="com.neophob.udp2i2c.Runner"
