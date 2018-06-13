@@ -13,7 +13,7 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <pi4j.version>0.0.5</pi4j.version>
-    <netty.version>3.6.4.Final</netty.version>
+    <netty.version>3.9.8.Final</netty.version>
   </properties>
   
   <build>
